@@ -3,26 +3,32 @@ import { LanguageIndex } from './language/languageIndex';
 import { EzCordHoverProvider } from './providers/ezcordHoverProvider';
 import { EzCordCompletionProvider } from './providers/ezcordCompletionProvider';
 import { getEzCordUtilsSettings } from './utils/settings';
+import { EZCORD_VIEW_ID, EzCordUtilsViewProvider } from './views/ezcordUtilsView';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
+const OPEN_SETTINGS_COMMAND = 'ezcordUtils.openSettings';
+const RELOAD_LANGUAGES_COMMAND = 'ezcordUtils.reloadLanguages';
+const OPEN_OUTPUT_COMMAND = 'ezcordUtils.openOutput';
+const REVEAL_LANGUAGE_FOLDER_COMMAND = 'ezcordUtils.revealLanguageFolder';
 
 export function activate(context: vscode.ExtensionContext) {
     const output = vscode.window.createOutputChannel('EzCord Utils');
     const index = new LanguageIndex(output);
 
+    const viewProvider = new EzCordUtilsViewProvider(index, output);
+    const view = vscode.window.createTreeView(EZCORD_VIEW_ID, { treeDataProvider: viewProvider, showCollapseAll: false });
+
     const reload = async () => {
         const settings = getEzCordUtilsSettings();
         output.appendLine(`[EzCord Utils] Settings: languageFolderPath=${settings.languageFolderPath}, default=${settings.defaultLanguage}, fallback=${settings.fallbackLanguage}`);
         await index.loadAndWatch(settings);
+        viewProvider.refresh();
     };
-
-    reload().catch(e => {
-        output.appendLine(`[EzCord Utils] Initial load failed: ${String(e)}`);
-    });
 
     context.subscriptions.push(
         output,
         index,
+        view,
         vscode.commands.registerCommand(
             OPEN_TRANSLATION_COMMAND,
             async (args: { language: string; key: string } | undefined) => {
@@ -51,6 +57,27 @@ export function activate(context: vscode.ExtensionContext) {
                 editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
             }
         ),
+        vscode.commands.registerCommand(OPEN_SETTINGS_COMMAND, async () => {
+            await vscode.commands.executeCommand('workbench.action.openSettings', 'ezcordUtils');
+        }),
+        vscode.commands.registerCommand(RELOAD_LANGUAGES_COMMAND, async () => {
+            try {
+                await reload();
+            } catch (e) {
+                output.appendLine(`[EzCord Utils] Reload failed: ${String(e)}`);
+            }
+        }),
+        vscode.commands.registerCommand(OPEN_OUTPUT_COMMAND, () => {
+            output.show(true);
+        }),
+        vscode.commands.registerCommand(REVEAL_LANGUAGE_FOLDER_COMMAND, async () => {
+            const folderUri = index.getLastLanguageFolderUri();
+            if (!folderUri) {
+                void vscode.window.showInformationMessage('EzCord Utils: Language folder is not resolved yet. Run reload once.');
+                return;
+            }
+            await vscode.commands.executeCommand('revealFileInOS', folderUri);
+        }),
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('ezcordUtils')) {
                 void reload();
@@ -65,6 +92,11 @@ export function activate(context: vscode.ExtensionContext) {
             "'"
         )
     );
+
+    reload().catch(e => {
+        output.appendLine(`[EzCord Utils] Initial load failed: ${String(e)}`);
+        viewProvider.refresh();
+    });
 }
 
 export function deactivate() {}

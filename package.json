@@ -2,17 +2,76 @@
   "name": "ezcord-utils-vsc",
   "displayName": "EzCord Utils (VS Code)",
   "description": "Hover + autocomplete for EzCord i18n keys from YAML language files.",
+  "icon": "src/assets/logo.png",
   "version": "0.0.1",
   "publisher": "your-name",
   "engines": {
     "vscode": "^1.60.0"
   },
   "activationEvents": [
-    "onLanguage:python",
-    "onLanguage:yaml"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ezcordUtils",
+          "title": "EzCord",
+          "icon": "src/assets/logo.png"
+        }
+      ]
+    },
+    "views": {
+      "ezcordUtils": [
+        {
+          "id": "ezcordUtils.view",
+          "name": "EzCord Utils",
+          "icon": "src/assets/logo.png"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ezcordUtils.openSettings",
+        "title": "EzCord Utils: Open Settings"
+      },
+      {
+        "command": "ezcordUtils.reloadLanguages",
+        "title": "EzCord Utils: Reload Language Files"
+      },
+      {
+        "command": "ezcordUtils.openOutput",
+        "title": "EzCord Utils: Show Output"
+      },
+      {
+        "command": "ezcordUtils.revealLanguageFolder",
+        "title": "EzCord Utils: Reveal Language Folder"
+      },
+      {
+        "command": "ezcordUtils.openTranslation",
+        "title": "EzCord Utils: Open Translation in YAML"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ezcordUtils.openSettings",
+          "when": "view == ezcordUtils.view",
+          "group": "navigation"
+        },
+        {
+          "command": "ezcordUtils.reloadLanguages",
+          "when": "view == ezcordUtils.view",
+          "group": "navigation"
+        },
+        {
+          "command": "ezcordUtils.openOutput",
+          "when": "view == ezcordUtils.view",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "EzCord Utils",
       "properties": {

@@ -146,6 +146,7 @@ export class LanguageIndex {
     private watcher: vscode.FileSystemWatcher | undefined;
     private lastLoadedFileCount = 0;
     private lastLoadedKeyCount = 0;
+    private lastLanguageFolderUri: vscode.Uri | undefined;
 
     constructor(private readonly output: vscode.OutputChannel) {}
 
@@ -161,6 +162,14 @@ export class LanguageIndex {
             }
         }
         return keys;
+    }
+
+    public getLanguages(): LanguageCode[] {
+        return [...this.byLanguage.keys()].sort((a, b) => a.localeCompare(b));
+    }
+
+    public getLastLanguageFolderUri(): vscode.Uri | undefined {
+        return this.lastLanguageFolderUri;
     }
 
     public getStats(): { files: number; keys: number } {
@@ -235,6 +244,8 @@ export class LanguageIndex {
             this.output.appendLine('[EzCord Utils] No workspace folder or language folder path configured.');
             return;
         }
+
+        this.lastLanguageFolderUri = folderUri;
 
         await this.loadOnce(folderUri);
         this.setupWatcher(folderUri);
