@@ -9,7 +9,7 @@ function getFilePrefix(filename: string): string | undefined {
 }
 
 export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
-    constructor(private readonly index: LanguageIndex) {}
+    constructor(private readonly index: LanguageIndex) { }
 
     provideCompletionItems(
         document: vscode.TextDocument,
@@ -34,9 +34,11 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
 
         const allKeys = [...this.index.getAllKeys()];
 
-        const relevantKeys = filePrefix
-            ? allKeys.filter(k => k.startsWith(`${filePrefix}.`) || k.startsWith('general.'))
-            : allKeys;
+        const relevantKeys = wantsQualified
+            ? allKeys
+            : filePrefix
+                ? allKeys.filter(k => k.startsWith(`${filePrefix}.`) || k.startsWith('general.'))
+                : allKeys;
 
         const items: vscode.CompletionItem[] = [];
 

@@ -27,7 +27,7 @@ export function getPythonStringAtPosition(
     let start = -1;
     let quote: '"' | "'" | undefined;
 
-    for (let i = char; i >= 0; i--) {
+    for (let i = Math.min(char - 1, text.length - 1); i >= 0; i--) {
         const c = text[i];
         if ((c === '"' || c === "'") && !isEscaped(text, i)) {
             start = i;
