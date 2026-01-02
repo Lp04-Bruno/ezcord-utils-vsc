@@ -1,0 +1,52 @@
+{
+  "name": "ezcord-utils-vsc",
+  "displayName": "EzCord Utils (VS Code)",
+  "description": "Hover + autocomplete for EzCord i18n keys from YAML language files.",
+  "version": "0.0.1",
+  "publisher": "your-name",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "EzCord Utils",
+      "properties": {
+        "ezcordUtils.languageFolderPath": {
+          "type": "string",
+          "default": "bot/lang",
+          "description": "Path to the folder containing language YAML files (e.g. bot/lang). Can be relative to the workspace root or an absolute path."
+        },
+        "ezcordUtils.defaultLanguage": {
+          "type": "string",
+          "default": "en",
+          "description": "Primary language filename prefix to use (e.g. en for en.yaml)."
+        },
+        "ezcordUtils.fallbackLanguage": {
+          "type": "string",
+          "default": "en",
+          "description": "Fallback language filename prefix (e.g. en). Used if the key is missing in the default language."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "build": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": ""
+  },
+  "dependencies": {
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.0",
+    "@types/vscode": "^1.60.0",
+    "typescript": "^4.4.3"
+  }
+}

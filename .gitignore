@@ -1,0 +1,29 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+out/
+dist/
+*.tsbuildinfo
+
+# VS Code extension packaging
+*.vsix
+
+# VS Code workspace
+.vscode-test/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Logs
+logs/
+*.log
