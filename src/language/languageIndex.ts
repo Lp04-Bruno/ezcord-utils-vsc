@@ -146,12 +146,22 @@ export class LanguageIndex {
     private watcher: vscode.FileSystemWatcher | undefined;
     private lastLoadedFileCount = 0;
     private lastLoadedKeyCount = 0;
+    private lastLoadedEntryCount = 0;
+    private lastLoadedLanguageCount = 0;
+    private lastParsedStrictCount = 0;
+    private lastParsedFallbackCount = 0;
+    private lastParsedFailedCount = 0;
     private lastLanguageFolderUri: vscode.Uri | undefined;
+    private lastSettings: EzCordUtilsSettings | undefined;
+
+    private readonly onDidUpdateEmitter = new vscode.EventEmitter<void>();
+    public readonly onDidUpdate = this.onDidUpdateEmitter.event;
 
     constructor(private readonly output: vscode.OutputChannel) {}
 
     public dispose() {
         this.watcher?.dispose();
+        this.onDidUpdateEmitter.dispose();
     }
 
     public getAllKeys(): Set<string> {
@@ -174,6 +184,26 @@ export class LanguageIndex {
 
     public getStats(): { files: number; keys: number } {
         return { files: this.lastLoadedFileCount, keys: this.lastLoadedKeyCount };
+    }
+
+    public getDetailedStats(): {
+        files: number;
+        languages: number;
+        uniqueKeys: number;
+        totalEntries: number;
+        parsedStrict: number;
+        parsedFallback: number;
+        parsedFailed: number;
+    } {
+        return {
+            files: this.lastLoadedFileCount,
+            languages: this.lastLoadedLanguageCount,
+            uniqueKeys: this.lastLoadedKeyCount,
+            totalEntries: this.lastLoadedEntryCount,
+            parsedStrict: this.lastParsedStrictCount,
+            parsedFallback: this.lastParsedFallbackCount,
+            parsedFailed: this.lastParsedFailedCount,
+        };
     }
 
     public getKeyLocation(language: LanguageCode, key: string): YamlKeyLocation | undefined {
@@ -239,6 +269,7 @@ export class LanguageIndex {
     }
 
     public async loadAndWatch(settings: EzCordUtilsSettings): Promise<void> {
+        this.lastSettings = settings;
         const folderUri = await resolveLanguageFolderUri(settings.languageFolderPath);
         if (!folderUri) {
             this.output.appendLine('[EzCord Utils] No workspace folder or language folder path configured.');
@@ -247,7 +278,7 @@ export class LanguageIndex {
 
         this.lastLanguageFolderUri = folderUri;
 
-        await this.loadOnce(folderUri);
+        await this.loadOnce(folderUri, settings);
         this.setupWatcher(folderUri);
     }
 
@@ -259,7 +290,7 @@ export class LanguageIndex {
 
         const reload = async () => {
             try {
-                await this.loadOnce(folderUri);
+                await this.loadOnce(folderUri, this.lastSettings);
             } catch (e) {
                 this.output.appendLine(`[EzCord Utils] Reload failed: ${String(e)}`);
             }
@@ -270,18 +301,75 @@ export class LanguageIndex {
         this.watcher.onDidDelete(reload);
     }
 
-    private async loadOnce(folderUri: vscode.Uri): Promise<void> {
+    private guessLanguageForFile(
+        folderUri: vscode.Uri,
+        file: vscode.Uri,
+        infoByBase: Map<string, Set<string>>,
+        settings: EzCordUtilsSettings | undefined
+    ): { language: string; isTagged: boolean } {
+        const fallback = settings?.fallbackLanguage;
+        const def = settings?.defaultLanguage;
+
+        const stem = path.basename(file.fsPath).replace(/\.(ya?ml)$/i, '');
+        const direct = stem.match(/^[a-z]{2,5}$/i);
+        if (direct) {
+            return { language: stem.toLowerCase(), isTagged: true };
+        }
+
+        const suffixMatch = stem.match(/^(.*?)[_-]([a-z]{2,5})$/i);
+        if (suffixMatch) {
+            const base = suffixMatch[1].toLowerCase();
+            const lang = suffixMatch[2].toLowerCase();
+            const langsForBase = infoByBase.get(base);
+            const hasMultiple = !!langsForBase && langsForBase.size >= 2;
+            const isPreferred = (def && lang === def.toLowerCase()) || (fallback && lang === fallback.toLowerCase());
+            if (hasMultiple || isPreferred) {
+                return { language: lang, isTagged: true };
+            }
+        }
+
+        const rel = path
+            .relative(folderUri.fsPath, file.fsPath)
+            .replace(/\\/g, '/');
+        const parts = rel.split('/').filter(Boolean);
+        if (parts.length >= 2) {
+            const maybeLang = parts[parts.length - 2];
+            if (/^[a-z]{2,5}$/i.test(maybeLang)) {
+                return { language: maybeLang.toLowerCase(), isTagged: true };
+            }
+        }
+
+        return { language: (def ?? 'en').toLowerCase(), isTagged: false };
+    }
+
+    private async loadOnce(folderUri: vscode.Uri, settings: EzCordUtilsSettings | undefined): Promise<void> {
         const pattern = new vscode.RelativePattern(folderUri, '**/*.{yml,yaml}');
         const files = await vscode.workspace.findFiles(pattern);
 
         const nextByLanguage = new Map<LanguageCode, Map<string, string>>();
         const nextLocationsByLanguage = new Map<LanguageCode, Map<string, YamlKeyLocation>>();
 
+        const infoByBase = new Map<string, Set<string>>();
+        for (const file of files) {
+            const stem = path.basename(file.fsPath).replace(/\.(ya?ml)$/i, '');
+            const m = stem.match(/^(.*?)[_-]([a-z]{2,5})$/i);
+            if (!m) continue;
+            const base = m[1].toLowerCase();
+            const lang = m[2].toLowerCase();
+            const set = infoByBase.get(base) ?? new Set<string>();
+            set.add(lang);
+            infoByBase.set(base, set);
+        }
+
+        let parsedStrict = 0;
+        let parsedFallback = 0;
+        let parsedFailed = 0;
+
         for (const file of files) {
             try {
                 const raw = await vscode.workspace.fs.readFile(file);
                 const text = Buffer.from(raw).toString('utf8');
-                const lang = languageFromFilename(path.basename(file.fsPath));
+                const { language: lang } = this.guessLanguageForFile(folderUri, file, infoByBase, settings);
 
                 const keyLocations = findYamlKeyLocations(text);
                 const existingLocations = nextLocationsByLanguage.get(lang) ?? new Map<string, YamlKeyLocation>();
@@ -294,9 +382,15 @@ export class LanguageIndex {
                 try {
                     const parsed = parseYaml(text) as unknown;
                     flattenYaml(parsed, '', flat);
+                    parsedStrict++;
                 } catch (e) {
                     flat = parseYamlToFlatMap(text);
+                    parsedFallback++;
                     this.output.appendLine(`[EzCord Utils] Parsed with fallback YAML parser: ${file.fsPath}`);
+                }
+
+                if (flat.size === 0) {
+                    parsedFailed++;
                 }
 
                 const existing = nextByLanguage.get(lang) ?? new Map<string, string>();
@@ -306,13 +400,20 @@ export class LanguageIndex {
                 nextByLanguage.set(lang, existing);
             } catch (e) {
                 this.output.appendLine(`[EzCord Utils] Failed to parse ${file.fsPath}: ${String(e)}`);
+                parsedFailed++;
             }
         }
 
         this.byLanguage = nextByLanguage;
         this.locationsByLanguage = nextLocationsByLanguage;
         this.lastLoadedFileCount = files.length;
+        this.lastLoadedLanguageCount = this.byLanguage.size;
         this.lastLoadedKeyCount = this.getAllKeys().size;
+        this.lastLoadedEntryCount = [...this.byLanguage.values()].reduce((acc, m) => acc + m.size, 0);
+
+        this.lastParsedStrictCount = parsedStrict;
+        this.lastParsedFallbackCount = parsedFallback;
+        this.lastParsedFailedCount = parsedFailed;
 
         if (files.length === 0) {
             this.output.appendLine(
@@ -322,5 +423,6 @@ export class LanguageIndex {
         }
 
         this.output.appendLine(`[EzCord Utils] Loaded ${this.lastLoadedFileCount} YAML files; ${this.lastLoadedKeyCount} keys.`);
+        this.onDidUpdateEmitter.fire();
     }
 }

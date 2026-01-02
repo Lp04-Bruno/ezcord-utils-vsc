@@ -64,12 +64,12 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
         if (element) return [];
 
         const settings = getEzCordUtilsSettings();
-        const stats = this.index.getStats();
+        const stats = this.index.getDetailedStats();
         const languages = this.index.getLanguages();
 
         const actions: EzCordNode = {
             kind: 'section',
-            label: 'Actions',
+            label: 'Quick Actions',
             collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
             children: [
                 makeAction('action-open-settings', 'Open Settings', 'ezcordUtils.openSettings', 'gear'),
@@ -81,7 +81,7 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
 
         const info: EzCordNode = {
             kind: 'section',
-            label: 'Status',
+            label: 'Index Status',
             collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
             children: [
                 {
@@ -108,25 +108,41 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
                 },
                 {
                     kind: 'info',
-                    label: 'YAML files',
+                    label: 'YAML files scanned',
                     description: String(stats.files),
                     collapsibleState: vscode.TreeItemCollapsibleState.None,
                     iconId: 'files',
                 },
                 {
                     kind: 'info',
-                    label: 'Keys indexed',
-                    description: String(stats.keys),
+                    label: 'Languages detected',
+                    description: String(stats.languages),
+                    tooltip: languages.length ? languages.join(', ') : 'No languages loaded yet.',
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    iconId: 'list-unordered',
+                },
+                {
+                    kind: 'info',
+                    label: 'Unique keys',
+                    description: String(stats.uniqueKeys),
                     collapsibleState: vscode.TreeItemCollapsibleState.None,
                     iconId: 'symbol-key',
                 },
                 {
                     kind: 'info',
-                    label: 'Languages',
-                    description: languages.length ? `${languages.length}` : '—',
-                    tooltip: languages.length ? languages.join(', ') : 'No languages loaded yet.',
+                    label: 'Total entries',
+                    description: String(stats.totalEntries),
+                    tooltip: 'Sum of key/value entries across all languages.',
                     collapsibleState: vscode.TreeItemCollapsibleState.None,
-                    iconId: 'list-unordered',
+                    iconId: 'database',
+                },
+                {
+                    kind: 'info',
+                    label: 'Parsed (strict / fallback / failed)',
+                    description: `${stats.parsedStrict} / ${stats.parsedFallback} / ${stats.parsedFailed}`,
+                    tooltip: 'Strict YAML parser used where possible; fallback handles non-strict files.',
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    iconId: 'checklist',
                 },
                 {
                     kind: 'info',

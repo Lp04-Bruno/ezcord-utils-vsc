@@ -18,6 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
     const viewProvider = new EzCordUtilsViewProvider(index, output);
     const view = vscode.window.createTreeView(EZCORD_VIEW_ID, { treeDataProvider: viewProvider, showCollapseAll: false });
 
+    context.subscriptions.push(index.onDidUpdate(() => viewProvider.refresh()));
+
     const reload = async () => {
         const settings = getEzCordUtilsSettings();
         output.appendLine(`[EzCord Utils] Settings: languageFolderPath=${settings.languageFolderPath}, default=${settings.defaultLanguage}, fallback=${settings.fallbackLanguage}`);
