@@ -8,7 +8,31 @@
     "theme": "dark"
   },
   "version": "0.0.2",
-  "publisher": "your-name",
+  "publisher": "Lp04-Bruno",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lp04-Bruno/ezcord-utils-vsc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lp04-Bruno/ezcord-utils-vsc/issues"
+  },
+  "homepage": "https://github.com/Lp04-Bruno/ezcord-utils-vsc#readme",
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "ezcord",
+    "i18n",
+    "localization",
+    "translation",
+    "yaml",
+    "python",
+    "hover",
+    "autocomplete",
+    "discord"
+  ],
   "engines": {
     "vscode": "^1.75.0"
   },
