@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import type { LanguageIndex } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
-import { getPythonFileStem } from '../utils/pythonContext';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
 
@@ -170,7 +169,7 @@ export class LanguageKeysOverviewPanel {
   }
 
   private updateForFileName(fileName: string): void {
-    const fileStem = getPythonFileStem(fileName);
+    const fileStem = path.parse(fileName).name;
     const fileLabel = path.basename(fileName);
     const prefix = `${fileStem}.`;
 

@@ -7,9 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.1.2] - 2026-01-03
 
 ### Changed
-- Python key parsing is now AST-based (Lezer) for more robust string detection (e.g. f-strings, triple quotes, multiline).
-- Unified translation candidate resolution across Hover, Completion, and Jump-to-YAML to avoid prefix-heuristic mismatches (file/class/function/general) and treats `_`/`-` as equivalent.
-- Improved Python completions ranking: keys are now ordered by the most specific matching scope prefix (file → class → function), so the most relevant suggestions appear first.
+- Hover resolution improved for EzCord-style nested keys (uses file + enclosing function prefix) and treats `_`/`-` as equivalent.
 - VS Code debug task: update `watch` task problem matcher for esbuild so launching no longer hangs on "Waiting for preLaunchTask 'watch'…".
 
 ## [0.1.1] - 2026-01-03
