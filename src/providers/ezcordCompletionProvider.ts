@@ -46,18 +46,36 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
             const resolved = this.index.resolve(fullKey, settings);
             const translation = resolved?.value;
 
-            let insertText = fullKey;
-            if (filePrefix && fullKey.startsWith(`${filePrefix}.`) && !wantsQualified) {
-                insertText = fullKey.slice(filePrefix.length + 1);
+            let insertText: string;
+            let labelText: string;
+
+            if (wantsQualified) {
+                if (!typedPrefix || !fullKey.startsWith(typedPrefix)) {
+                    continue;
+                }
+
+                insertText = fullKey.slice(typedPrefix.length);
+                if (!insertText) {
+                    continue;
+                }
+                labelText = fullKey;
+            } else {
+                insertText = fullKey;
+                if (filePrefix && fullKey.startsWith(`${filePrefix}.`)) {
+                    insertText = fullKey.slice(filePrefix.length + 1);
+                }
+
+                if (typedPrefix && !insertText.startsWith(typedPrefix)) {
+                    continue;
+                }
+
+                labelText = insertText;
             }
 
-            const item = new vscode.CompletionItem(insertText, vscode.CompletionItemKind.Value);
+            const item = new vscode.CompletionItem(labelText, vscode.CompletionItemKind.Value);
+            item.insertText = insertText;
             item.detail = translation ? `${translation}` : '⚠️ Not translated';
-            item.sortText = insertText;
-
-            if (typedPrefix && !insertText.startsWith(typedPrefix)) {
-                continue;
-            }
+            item.sortText = labelText;
 
             items.push(item);
         }
