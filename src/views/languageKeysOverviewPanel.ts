@@ -33,6 +33,8 @@ export class LanguageKeysOverviewPanel {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly nonce: string;
 
+  private lastPythonFileName: string | undefined;
+
   private constructor(
     private readonly panel: vscode.WebviewPanel,
     private readonly index: LanguageIndex,
@@ -60,11 +62,11 @@ export class LanguageKeysOverviewPanel {
           });
         }
       }),
-      vscode.window.onDidChangeActiveTextEditor(() => this.update()),
-      this.index.onDidUpdate(() => this.update())
+      vscode.window.onDidChangeActiveTextEditor(() => this.updateFromActiveEditor()),
+      this.index.onDidUpdate(() => this.updateFromStoredSelection())
     );
 
-    this.update();
+    this.updateFromActiveEditor();
   }
 
   public static openNew(extensionUri: vscode.Uri, index: LanguageIndex, output: vscode.OutputChannel): void {
@@ -119,11 +121,22 @@ export class LanguageKeysOverviewPanel {
     }
   }
 
-  private update(): void {
+  private updateFromActiveEditor(): void {
     const editor = vscode.window.activeTextEditor;
     const doc = editor?.document;
 
     if (!doc || doc.languageId !== 'python' || doc.uri.scheme !== 'file') {
+      // User focused the webview or another editor type; keep last known selection.
+      this.updateFromStoredSelection();
+      return;
+    }
+
+    this.lastPythonFileName = doc.fileName;
+    this.updateForFileName(doc.fileName);
+  }
+
+  private updateFromStoredSelection(): void {
+    if (!this.lastPythonFileName) {
       void this.panel.webview.postMessage({
         type: 'update',
         data: {
@@ -138,8 +151,12 @@ export class LanguageKeysOverviewPanel {
       return;
     }
 
-    const fileStem = path.parse(doc.fileName).name;
-    const fileLabel = path.basename(doc.fileName);
+    this.updateForFileName(this.lastPythonFileName);
+  }
+
+  private updateForFileName(fileName: string): void {
+    const fileStem = path.parse(fileName).name;
+    const fileLabel = path.basename(fileName);
     const prefix = `${fileStem}.`;
 
     const allKeys = [...this.index.getAllKeys()];
