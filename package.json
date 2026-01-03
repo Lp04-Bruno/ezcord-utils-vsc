@@ -57,30 +57,6 @@
         "title": "EzCord Utils: Open Translation in YAML"
       }
     ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "ezcordUtils.openLanguageKeysOverview",
-          "when": "view == ezcordUtils.view",
-          "group": "navigation"
-        },
-        {
-          "command": "ezcordUtils.openSettings",
-          "when": "view == ezcordUtils.view",
-          "group": "navigation"
-        },
-        {
-          "command": "ezcordUtils.reloadLanguages",
-          "when": "view == ezcordUtils.view",
-          "group": "navigation"
-        },
-        {
-          "command": "ezcordUtils.openOutput",
-          "when": "view == ezcordUtils.view",
-          "group": "navigation"
-        }
-      ]
-    },
     "configuration": {
       "title": "EzCord Utils",
       "properties": {
