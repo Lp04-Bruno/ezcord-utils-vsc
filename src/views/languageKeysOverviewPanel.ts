@@ -126,7 +126,6 @@ export class LanguageKeysOverviewPanel {
     const doc = editor?.document;
 
     if (!doc || doc.languageId !== 'python' || doc.uri.scheme !== 'file') {
-      // User focused the webview or another editor type; keep last known selection.
       this.updateFromStoredSelection();
       return;
     }
