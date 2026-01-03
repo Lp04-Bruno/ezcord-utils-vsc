@@ -1,0 +1,25 @@
+# Source / build inputs
+src/**
+!src/assets/logo.png
+**/*.ts
+**/*.tsbuildinfo
+
+# Editor / VCS
+.vscode/**
+.git/**
+.github/**
+
+# Not needed at runtime
+*.log
+tsconfig.json
+.gitignore
+
+# Keep production dependencies (do NOT ignore node_modules)
+
+# Explicitly keep required runtime assets
+!out/**
+!media/**
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE

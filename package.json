@@ -3,6 +3,10 @@
   "displayName": "EzCord Utils (VS Code)",
   "description": "Hover + autocomplete for EzCord i18n keys from YAML language files.",
   "icon": "src/assets/logo.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "version": "0.0.1",
   "publisher": "your-name",
   "engines": {
