@@ -153,6 +153,7 @@ export class LanguageIndex {
     private lastParsedFailedCount = 0;
     private lastLanguageFolderUri: vscode.Uri | undefined;
     private lastSettings: EzCordUtilsSettings | undefined;
+    private lastLoadedAt: Date | undefined;
 
     private readonly onDidUpdateEmitter = new vscode.EventEmitter<void>();
     public readonly onDidUpdate = this.onDidUpdateEmitter.event;
@@ -180,6 +181,10 @@ export class LanguageIndex {
 
     public getLastLanguageFolderUri(): vscode.Uri | undefined {
         return this.lastLanguageFolderUri;
+    }
+
+    public getLastLoadedAt(): Date | undefined {
+        return this.lastLoadedAt;
     }
 
     public getStats(): { files: number; keys: number } {
@@ -423,6 +428,7 @@ export class LanguageIndex {
         }
 
         this.output.appendLine(`[EzCord Utils] Loaded ${this.lastLoadedFileCount} YAML files; ${this.lastLoadedKeyCount} keys.`);
+        this.lastLoadedAt = new Date();
         this.onDidUpdateEmitter.fire();
     }
 }

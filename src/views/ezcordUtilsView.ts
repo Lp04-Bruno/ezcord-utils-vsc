@@ -67,6 +67,48 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
         const stats = this.index.getDetailedStats();
         const languages = this.index.getLanguages();
 
+        const lastLoadedAt = this.index.getLastLoadedAt();
+        const lastLoadedText = lastLoadedAt
+            ? lastLoadedAt.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' })
+            : '—';
+
+        const overview: EzCordNode = {
+            kind: 'section',
+            label: 'Overview',
+            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+            children: [
+                {
+                    kind: 'info',
+                    label: 'YAML files',
+                    description: String(stats.files),
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    iconId: 'files',
+                },
+                {
+                    kind: 'info',
+                    label: 'Languages',
+                    description: String(stats.languages),
+                    tooltip: languages.length ? languages.join(', ') : 'No languages loaded yet.',
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    iconId: 'globe',
+                },
+                {
+                    kind: 'info',
+                    label: 'Unique keys',
+                    description: String(stats.uniqueKeys),
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    iconId: 'symbol-key',
+                },
+                {
+                    kind: 'info',
+                    label: 'Last reload',
+                    description: lastLoadedText,
+                    collapsibleState: vscode.TreeItemCollapsibleState.None,
+                    iconId: 'clock',
+                },
+            ],
+        };
+
         const actions: EzCordNode = {
             kind: 'section',
             label: 'Quick Actions',
@@ -74,15 +116,15 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
             children: [
                 makeAction('action-open-settings', 'Open Settings', 'ezcordUtils.openSettings', 'gear'),
                 makeAction('action-reload', 'Reload Language Files', 'ezcordUtils.reloadLanguages', 'refresh'),
-                makeAction('action-open-output', 'Show Output', 'ezcordUtils.openOutput', 'output'),
                 makeAction('action-reveal-folder', 'Reveal Language Folder', 'ezcordUtils.revealLanguageFolder', 'folder-opened'),
+                makeAction('action-open-output', 'Show Output', 'ezcordUtils.openOutput', 'output'),
             ],
         };
 
-        const info: EzCordNode = {
+        const details: EzCordNode = {
             kind: 'section',
-            label: 'Index Status',
-            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+            label: 'Details',
+            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
             children: [
                 {
                     kind: 'info',
@@ -108,28 +150,6 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
                 },
                 {
                     kind: 'info',
-                    label: 'YAML files scanned',
-                    description: String(stats.files),
-                    collapsibleState: vscode.TreeItemCollapsibleState.None,
-                    iconId: 'files',
-                },
-                {
-                    kind: 'info',
-                    label: 'Languages detected',
-                    description: String(stats.languages),
-                    tooltip: languages.length ? languages.join(', ') : 'No languages loaded yet.',
-                    collapsibleState: vscode.TreeItemCollapsibleState.None,
-                    iconId: 'list-unordered',
-                },
-                {
-                    kind: 'info',
-                    label: 'Unique keys',
-                    description: String(stats.uniqueKeys),
-                    collapsibleState: vscode.TreeItemCollapsibleState.None,
-                    iconId: 'symbol-key',
-                },
-                {
-                    kind: 'info',
                     label: 'Total entries',
                     description: String(stats.totalEntries),
                     tooltip: 'Sum of key/value entries across all languages.',
@@ -144,17 +164,9 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
                     collapsibleState: vscode.TreeItemCollapsibleState.None,
                     iconId: 'checklist',
                 },
-                {
-                    kind: 'info',
-                    label: 'Output channel',
-                    description: 'EzCord Utils',
-                    collapsibleState: vscode.TreeItemCollapsibleState.None,
-                    iconId: 'output',
-                    command: { command: 'ezcordUtils.openOutput', title: 'Show Output' },
-                },
             ],
         };
 
-        return [actions, info];
+        return [overview, actions, details];
     }
 }
