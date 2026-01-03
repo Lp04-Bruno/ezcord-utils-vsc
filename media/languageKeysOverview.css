@@ -23,6 +23,14 @@ header {
   align-items: center;
 }
 
+.fileLabel:not(:empty)::before {
+  content: "—";
+  opacity: 0.6;
+  margin: 0 6px;
+  font-weight: 400;
+  font-size: 12px;
+}
+
 .meta {
   color: var(--vscode-descriptionForeground);
   font-size: 12px;
@@ -84,6 +92,27 @@ tbody tr:hover {
   font-family: var(--vscode-editor-font-family);
 }
 
+.keyBtn {
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.keyBtn:hover {
+  text-decoration: underline;
+}
+
+.keyBtn:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
 .muted {
   color: var(--vscode-descriptionForeground);
 }
@@ -101,6 +130,62 @@ tbody tr:hover {
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 12px;
+}
+
+.hidden {
+  display: none;
+}
+
+.detailBar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 1px solid var(--vscode-editorGroup-border);
+  border-radius: 4px;
+  background: var(--vscode-sideBar-background);
+}
+
+.detailTitle {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyFull {
+  font-family: var(--vscode-editor-font-family);
+}
+
+.detailActions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  cursor: pointer;
+  border: 1px solid var(--vscode-button-border, transparent);
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.detailTable tbody td {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
+  word-break: break-word;
+}
+
+.missing {
+  color: var(--vscode-notificationsWarningIcon-foreground, var(--vscode-editorWarning-foreground));
 }
 
 .jumpBtn:hover {

@@ -4,6 +4,18 @@ All notable changes to this extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows semantic versioning.
 
+## [0.0.2] - 2026-01-03
+
+### Added
+- Language Keys Overview: click a key to open a details view with all translations per language.
+
+### Changed
+- Language Keys Overview header separator styling.
+- Language Keys Overview section header now shows `<file> keys` instead of "BASE Keys".
+
+### Fixed
+- Autocomplete no longer duplicates the prefix when completing already-qualified keys (e.g. `reminder.`).
+
 ## [0.0.1] - 2026-01-03
 
 ### Added
@@ -19,6 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 - Tolerant parsing for common non-strict YAML quirks.
-- Autocomplete no longer duplicates the prefix when completing already-qualified keys (e.g. `reminder.`).
 
+[0.0.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.0.2
 [0.0.1]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.0.1

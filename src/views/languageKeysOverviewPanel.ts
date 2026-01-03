@@ -20,10 +20,21 @@ type OverviewPayload = {
   lastReloadText: string;
 };
 
+type KeyDetailsPayload = {
+  key: string;
+  translations: Array<{ language: string; value: string | null }>;
+};
+
 function isJumpMessage(message: unknown): message is { type: 'jump'; key: string } {
   if (!message || typeof message !== 'object') return false;
   const m = message as { [k: string]: unknown };
   return m.type === 'jump' && typeof m.key === 'string';
+}
+
+function isDetailsMessage(message: unknown): message is { type: 'details'; key: string } {
+  if (!message || typeof message !== 'object') return false;
+  const m = message as { [k: string]: unknown };
+  return m.type === 'details' && typeof m.key === 'string';
 }
 
 export class LanguageKeysOverviewPanel {
@@ -60,6 +71,10 @@ export class LanguageKeysOverviewPanel {
             language: settings.defaultLanguage,
             key: message.key,
           });
+        }
+
+        if (isDetailsMessage(message)) {
+          this.postKeyDetails(message.key);
         }
       }),
       vscode.window.onDidChangeActiveTextEditor(() => this.updateFromActiveEditor()),
@@ -158,6 +173,8 @@ export class LanguageKeysOverviewPanel {
     const fileLabel = path.basename(fileName);
     const prefix = `${fileStem}.`;
 
+    this.panel.title = `Language Keys Overview — ${fileLabel}`;
+
     const allKeys = [...this.index.getAllKeys()];
     const languagesTotal = this.index.getLanguages().length;
 
@@ -190,6 +207,24 @@ export class LanguageKeysOverviewPanel {
         generalKeys,
         lastReloadText: this.index.getLastLoadedAt()?.toLocaleString() ?? '—',
       } satisfies OverviewPayload,
+    });
+  }
+
+  private postKeyDetails(key: string): void {
+    const languages = this.index.getLanguages();
+    const resolved = this.index.resolveAllLanguages(key);
+
+    const translations = languages.map(language => ({
+      language,
+      value: resolved.get(language) ?? null,
+    }));
+
+    void this.panel.webview.postMessage({
+      type: 'keyDetails',
+      data: {
+        key,
+        translations,
+      } satisfies KeyDetailsPayload,
     });
   }
 
