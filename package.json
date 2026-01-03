@@ -7,7 +7,7 @@
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "version": "0.0.2",
+  "version": "0.1.0",
   "publisher": "Lp04-Bruno",
   "license": "MIT",
   "repository": {
@@ -107,10 +107,12 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "build": "npm run compile",
+    "vscode:prepublish": "npm run bundle",
+    "build": "npm run bundle",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "typecheck": "tsc -p ./ --noEmit",
+    "bundle": "npm run typecheck && node scripts/esbuild.js",
+    "watch": "node scripts/esbuild.js --watch",
     "postinstall": ""
   },
   "dependencies": {
@@ -119,6 +121,7 @@
   "devDependencies": {
     "@types/node": "^16.18.0",
     "@types/vscode": "^1.75.0",
+    "esbuild": "^0.20.2",
     "typescript": "^4.4.3"
   }
 }

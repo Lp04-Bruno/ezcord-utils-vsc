@@ -4,6 +4,9 @@ src/**
 **/*.ts
 **/*.tsbuildinfo
 
+# Build scripts
+scripts/**
+
 # Editor / VCS
 .vscode/**
 .git/**
@@ -14,10 +17,15 @@ src/**
 tsconfig.json
 .gitignore
 
-# Keep production dependencies (do NOT ignore node_modules)
+# With bundling enabled, exclude dependencies
+node_modules/**
+
+# Exclude compiled output except the bundled entry
+out/**
+!out/extension.js
+!out/extension.js.map
 
 # Explicitly keep required runtime assets
-!out/**
 !media/**
 !package.json
 !README.md
