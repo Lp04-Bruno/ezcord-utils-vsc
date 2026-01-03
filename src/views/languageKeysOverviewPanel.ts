@@ -29,7 +29,7 @@ function isJumpMessage(message: unknown): message is { type: 'jump'; key: string
 export class LanguageKeysOverviewPanel {
   public static readonly viewType = 'ezcordUtils.languageKeysOverview';
 
-  private static currentPanel: LanguageKeysOverviewPanel | undefined;
+  private static readonly openPanels = new Set<LanguageKeysOverviewPanel>();
   private readonly disposables: vscode.Disposable[] = [];
 
   private constructor(
@@ -64,26 +64,19 @@ export class LanguageKeysOverviewPanel {
     this.update();
   }
 
-  public static createOrShow(extensionUri: vscode.Uri, index: LanguageIndex, output: vscode.OutputChannel): void {
-    const column = vscode.window.activeTextEditor?.viewColumn;
-
-    if (LanguageKeysOverviewPanel.currentPanel) {
-      LanguageKeysOverviewPanel.currentPanel.panel.reveal(column);
-      LanguageKeysOverviewPanel.currentPanel.update();
-      return;
-    }
-
+  public static openNew(extensionUri: vscode.Uri, index: LanguageIndex, output: vscode.OutputChannel): void {
     const panel = vscode.window.createWebviewPanel(
       LanguageKeysOverviewPanel.viewType,
       'Language Keys Overview',
-      column ?? vscode.ViewColumn.Beside,
+      vscode.ViewColumn.Beside,
       {
         enableScripts: true,
         retainContextWhenHidden: true,
       }
     );
 
-    LanguageKeysOverviewPanel.currentPanel = new LanguageKeysOverviewPanel(panel, index, output, extensionUri);
+    const instance = new LanguageKeysOverviewPanel(panel, index, output, extensionUri);
+    LanguageKeysOverviewPanel.openPanels.add(instance);
   }
 
   private async loadHtmlFromDisk(): Promise<void> {
@@ -112,7 +105,7 @@ export class LanguageKeysOverviewPanel {
   }
 
   private dispose(): void {
-    LanguageKeysOverviewPanel.currentPanel = undefined;
+    LanguageKeysOverviewPanel.openPanels.delete(this);
     while (this.disposables.length) {
       const d = this.disposables.pop();
       try {

@@ -112,7 +112,7 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
 
         const actions: EzCordNode = {
             kind: 'section',
-            label: 'Quick Actions',
+            label: 'Actions',
             collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
             children: [
                 makeAction('action-open-language-keys', 'Open Language Keys Overview', 'ezcordUtils.openLanguageKeysOverview', 'list-selection'),
@@ -123,9 +123,9 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
             ],
         };
 
-        const details: EzCordNode = {
+        const configuration: EzCordNode = {
             kind: 'section',
-            label: 'Details',
+            label: 'Configuration',
             collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
             children: [
                 {
@@ -150,6 +150,14 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
                     collapsibleState: vscode.TreeItemCollapsibleState.None,
                     iconId: 'globe',
                 },
+            ],
+        };
+
+        const diagnostics: EzCordNode = {
+            kind: 'section',
+            label: 'Diagnostics',
+            collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+            children: [
                 {
                     kind: 'info',
                     label: 'Total entries',
@@ -169,6 +177,6 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
             ],
         };
 
-        return [overview, actions, details];
+        return [overview, actions, configuration, diagnostics];
     }
 }

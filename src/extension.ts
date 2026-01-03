@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand('revealFileInOS', folderUri);
         }),
         vscode.commands.registerCommand(OPEN_LANGUAGE_KEYS_OVERVIEW_COMMAND, () => {
-            LanguageKeysOverviewPanel.createOrShow(context.extensionUri, index, output);
+            LanguageKeysOverviewPanel.openNew(context.extensionUri, index, output);
         }),
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('ezcordUtils')) {
