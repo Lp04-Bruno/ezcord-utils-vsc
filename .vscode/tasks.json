@@ -26,9 +26,25 @@
                 "watch"
             ],
             "group": "build",
-            "problemMatcher": [
-                "$tsc-watch"
-            ],
+            "problemMatcher": {
+                "owner": "ezcord-utils-esbuild",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^ESBUILD_ERROR:(.+):(\\d+):(\\d+):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "^\\[watch\\] build finished, watching for changes\\.\\.\\.$"
+                }
+            },
             "isBackground": true
         }
     ]

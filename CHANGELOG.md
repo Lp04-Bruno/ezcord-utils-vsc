@@ -4,6 +4,12 @@ All notable changes to this extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows semantic versioning.
 
+## [0.1.2] - 2026-01-03
+
+### Changed
+- Hover resolution improved for EzCord-style nested keys (uses file + enclosing function prefix) and treats `_`/`-` as equivalent.
+- VS Code debug task: update `watch` task problem matcher for esbuild so launching no longer hangs on "Waiting for preLaunchTask 'watch'…".
+
 ## [0.1.1] - 2026-01-03
 
 ### Added
@@ -46,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 - Tolerant parsing for common non-strict YAML quirks.
 
+[0.1.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.2
 [0.1.1]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.0
 [0.0.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.0.2
