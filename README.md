@@ -1,62 +1,83 @@
 # EzCord Utils (VS Code)
 
-VS Code extension for EzCord projects: hover + autocomplete for i18n keys loaded from your YAML language files.
+Productivity helpers for EzCord-style i18n in VS Code.
 
-It reads your `bot/lang/*.yaml` (or whatever folder you configure), flattens nested YAML into dot-notation keys, and provides:
+This extension indexes your YAML language files and provides hover tooltips, autocomplete, and fast navigation to translation keys while you work in Python.
 
-## Features
+## What you get
 
-- Hover translations inside Python string literals.
-- Autocomplete for keys (filtered by file prefix + `general.*`).
-- Jump to definition: “Open in YAML” from the hover opens the correct `*.yaml` and reveals the key.
-- Watches language files and reloads automatically.
-- Works with EzCord language YAMLs even if they contain non-strict YAML quirks.
+- **Hover translations** for i18n keys inside Python string literals.
+- **Autocomplete** for keys while typing.
+- **Jump to YAML**: open the correct language YAML and reveal the key.
+- **Language Keys Overview** tab: for the active Python file, shows keys for `<file>.*` plus `general.*` with one-click jump.
+- **Sidebar (Activity Bar)** with stats and quick actions.
+- **Auto-reload** when language files change.
+- **Tolerant parsing**: handles common “non-strict” YAML quirks.
 
-## How it works
+## Quick start
 
-- Hover/Completion triggers in **Python** files.
-- Any **Python string literal** that looks like a key (e.g. `level.settings.xp_modal.title`) or contains `{key}` placeholders is detected.
-- If you type unqualified keys (no `.`), the extension tries candidates in this order:
-   1) `<currentFileNameWithoutPy>.<key>`
-   2) `general.<key>`
-   3) `<key>`
+1. Install the extension.
+2. Open your EzCord project in VS Code.
+3. Make sure your language files are in the configured folder (default: `bot/lang`).
+4. Open any Python file and:
+    - hover a key like `level.settings.xp_modal.title`, or
+    - run **EzCord Utils: Open Language Keys Overview**.
 
-## Settings
+## How key detection works
 
-Open Settings → search for “EzCord Utils” (or edit `settings.json`).
+The extension looks at **Python string literals**.
+
+- Full keys like `level.settings.xp_modal.title` work directly.
+- Placeholders like `{general.ok}` inside longer strings are also detected.
+- If you type an unqualified key without dots (e.g. `"ok"`), the extension tries these candidates in order:
+   1. `<currentFileNameWithoutPy>.<key>`
+   2. `general.<key>`
+   3. `<key>`
+
+## Configuration
+
+Open Settings and search for **EzCord Utils** (or edit `settings.json`).
 
 - `ezcordUtils.languageFolderPath` (default: `bot/lang`)
-   - Relative to workspace root(s) or absolute path.
+   - Relative to the workspace root (or absolute path).
+   - All `*.yaml` / `*.yml` files under this folder are indexed.
 - `ezcordUtils.defaultLanguage` (default: `en`)
-   - The language file prefix, e.g. `en` for `en.yaml`.
+   - Preferred language prefix (for example `en` for `en.yaml`).
 - `ezcordUtils.fallbackLanguage` (default: `en`)
-   - Used if a key doesn’t exist in the default language.
+   - Used if the key is missing in the default language.
+
+## Commands
+
+You can run these via the Command Palette:
+
+- **EzCord Utils: Open Language Keys Overview** (`ezcordUtils.openLanguageKeysOverview`)
+- **EzCord Utils: Open Translation in YAML** (`ezcordUtils.openTranslation`)
+- **EzCord Utils: Reload Language Files** (`ezcordUtils.reloadLanguages`)
+- **EzCord Utils: Reveal Language Folder** (`ezcordUtils.revealLanguageFolder`)
+- **EzCord Utils: Open Settings** (`ezcordUtils.openSettings`)
+- **EzCord Utils: Show Output** (`ezcordUtils.openOutput`)
+
+## Troubleshooting
+
+- Open **Output** → select **EzCord Utils**.
+- If nothing is indexed:
+   - verify `ezcordUtils.languageFolderPath` points to the folder containing your YAML files
+   - run **EzCord Utils: Reload Language Files** once
+- Multi-root workspaces are supported: the extension searches all workspace folders.
 
 ## Development
 
 Prereqs: Node.js + npm.
 
-Install deps:
 ```bash
 npm install
-```
-
-Build:
-```bash
 npm run build
 ```
 
-Watch (recommended while developing):
+For local development:
+
 ```bash
 npm run watch
 ```
 
-Run / Debug:
-- Press `F5` → opens an “Extension Development Host” window.
-- In that window, open your EzCord project and hover Python keys.
-
-## Troubleshooting
-
-- Check the Output panel: “EzCord Utils”.
-- If no keys load, verify `ezcordUtils.languageFolderPath` points to the folder that contains `*.yaml` files.
-- Multi-root workspace: the extension searches all workspace folders for the configured language folder.
+Then press `F5` to launch an **Extension Development Host**.
