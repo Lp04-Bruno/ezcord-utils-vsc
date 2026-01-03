@@ -31,6 +31,7 @@ export class LanguageKeysOverviewPanel {
 
   private static readonly openPanels = new Set<LanguageKeysOverviewPanel>();
   private readonly disposables: vscode.Disposable[] = [];
+  private readonly nonce: string;
 
   private constructor(
     private readonly panel: vscode.WebviewPanel,
@@ -38,6 +39,8 @@ export class LanguageKeysOverviewPanel {
     private readonly output: vscode.OutputChannel,
     private readonly extensionUri: vscode.Uri
   ) {
+    this.nonce = LanguageKeysOverviewPanel.makeNonce();
+
     this.panel.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')],
@@ -93,6 +96,7 @@ export class LanguageKeysOverviewPanel {
       );
 
       html = html.split('{{cspSource}}').join(this.panel.webview.cspSource);
+      html = html.split('{{nonce}}').join(this.nonce);
       html = html.split('{{styleUri}}').join(String(styleUri));
       html = html.split('{{scriptUri}}').join(String(scriptUri));
 
@@ -187,5 +191,14 @@ export class LanguageKeysOverviewPanel {
   <div style="color: var(--vscode-descriptionForeground);">${safe}</div>
   </body>
 </html>`;
+  }
+
+  private static makeNonce(): string {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let nonce = '';
+    for (let i = 0; i < 32; i++) {
+      nonce += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return nonce;
   }
 }
