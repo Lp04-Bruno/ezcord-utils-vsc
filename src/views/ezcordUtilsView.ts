@@ -6,6 +6,7 @@ export const EZCORD_VIEW_ID = 'ezcordUtils.view';
 
 type NodeKind =
     | 'section'
+    | 'action-open-language-keys'
     | 'action-open-settings'
     | 'action-reload'
     | 'action-open-output'
@@ -114,6 +115,7 @@ export class EzCordUtilsViewProvider implements vscode.TreeDataProvider<EzCordNo
             label: 'Quick Actions',
             collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
             children: [
+                makeAction('action-open-language-keys', 'Open Language Keys Overview', 'ezcordUtils.openLanguageKeysOverview', 'list-selection'),
                 makeAction('action-open-settings', 'Open Settings', 'ezcordUtils.openSettings', 'gear'),
                 makeAction('action-reload', 'Reload Language Files', 'ezcordUtils.reloadLanguages', 'refresh'),
                 makeAction('action-reveal-folder', 'Reveal Language Folder', 'ezcordUtils.revealLanguageFolder', 'folder-opened'),

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}};" />
+  <title>Language Keys Overview</title>
+  <link rel="stylesheet" href="{{styleUri}}" />
+</head>
+<body>
+  <header>
+    <div class="title">Language Keys Overview <span class="muted" id="fileLabel"></span></div>
+    <div class="meta">
+      <span id="langMeta"></span>
+      <span id="reloadMeta"></span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="section">
+      <h2 id="baseHeading">BASE Keys</h2>
+      <div id="baseContainer"></div>
+    </div>
+
+    <div class="section">
+      <h2 id="generalHeading">GENERAL Keys</h2>
+      <div id="generalContainer"></div>
+    </div>
+  </div>
+
+  <script src="{{scriptUri}}"></script>
+</body>
+</html>

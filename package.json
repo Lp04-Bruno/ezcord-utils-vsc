@@ -33,6 +33,10 @@
     },
     "commands": [
       {
+        "command": "ezcordUtils.openLanguageKeysOverview",
+        "title": "EzCord Utils: Open Language Keys Overview"
+      },
+      {
         "command": "ezcordUtils.openSettings",
         "title": "EzCord Utils: Open Settings"
       },
@@ -55,6 +59,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "ezcordUtils.openLanguageKeysOverview",
+          "when": "view == ezcordUtils.view",
+          "group": "navigation"
+        },
         {
           "command": "ezcordUtils.openSettings",
           "when": "view == ezcordUtils.view",

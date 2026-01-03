@@ -4,12 +4,14 @@ import { EzCordHoverProvider } from './providers/ezcordHoverProvider';
 import { EzCordCompletionProvider } from './providers/ezcordCompletionProvider';
 import { getEzCordUtilsSettings } from './utils/settings';
 import { EZCORD_VIEW_ID, EzCordUtilsViewProvider } from './views/ezcordUtilsView';
+import { LanguageKeysOverviewPanel } from './views/languageKeysOverviewPanel';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
 const OPEN_SETTINGS_COMMAND = 'ezcordUtils.openSettings';
 const RELOAD_LANGUAGES_COMMAND = 'ezcordUtils.reloadLanguages';
 const OPEN_OUTPUT_COMMAND = 'ezcordUtils.openOutput';
 const REVEAL_LANGUAGE_FOLDER_COMMAND = 'ezcordUtils.revealLanguageFolder';
+const OPEN_LANGUAGE_KEYS_OVERVIEW_COMMAND = 'ezcordUtils.openLanguageKeysOverview';
 
 export function activate(context: vscode.ExtensionContext) {
     const output = vscode.window.createOutputChannel('EzCord Utils');
@@ -79,6 +81,9 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             await vscode.commands.executeCommand('revealFileInOS', folderUri);
+        }),
+        vscode.commands.registerCommand(OPEN_LANGUAGE_KEYS_OVERVIEW_COMMAND, () => {
+            LanguageKeysOverviewPanel.createOrShow(context.extensionUri, index, output);
         }),
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('ezcordUtils')) {
