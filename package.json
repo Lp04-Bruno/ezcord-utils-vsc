@@ -1,6 +1,6 @@
 {
   "name": "ezcord-utils-vsc",
-  "displayName": "EzCord Utils (VS Code)",
+  "displayName": "EzCord Utils",
   "description": "Hover + autocomplete for EzCord i18n keys from YAML language files.",
   "icon": "src/assets/logo.png",
   "galleryBanner": {
