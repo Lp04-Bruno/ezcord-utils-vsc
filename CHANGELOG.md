@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.1.1] - 2026-01-03
 
+### Added
+- Add contributing guidelines (CONTRIBUTING.md).
+- Add security policy (.github/SECURITY.md).
+
 ### Changed
 - Rename extension display name to "EzCord Utils".
 
