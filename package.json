@@ -116,6 +116,8 @@
     "postinstall": ""
   },
   "dependencies": {
+    "@lezer/common": "^1.5.0",
+    "@lezer/python": "^1.1.18",
     "yaml": "^2.4.5"
   },
   "devDependencies": {

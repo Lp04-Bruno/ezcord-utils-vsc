@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getPythonStringAtPositionAst } from './pythonAst';
 
 export interface PythonStringAtPosition {
     quote: '"' | "'";
@@ -18,6 +19,11 @@ export function getPythonStringAtPosition(
     document: vscode.TextDocument,
     position: vscode.Position
 ): PythonStringAtPosition | undefined {
+    const ast = getPythonStringAtPositionAst(document, position);
+    if (ast) {
+        return { quote: '"', value: ast.value, range: ast.range };
+    }
+
     const line = document.lineAt(position.line);
     const text = line.text;
 

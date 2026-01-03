@@ -2,11 +2,7 @@ import * as vscode from 'vscode';
 import { LanguageIndex } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
 import { getPythonStringAtPosition } from '../utils/pythonString';
-
-function getFilePrefix(filename: string): string | undefined {
-    if (!filename.endsWith('.py')) return undefined;
-    return filename.replace(/\.py$/i, '') || undefined;
-}
+import { getPythonKeyContextAtPosition } from '../utils/pythonContext';
 
 export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
     constructor(private readonly index: LanguageIndex) { }
@@ -30,15 +26,59 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
         const wantsQualified = typedPrefix.includes('.');
 
         const settings = getEzCordUtilsSettings();
-        const filePrefix = getFilePrefix(document.fileName.split(/[/\\]/).pop() ?? '');
+        const ctx = getPythonKeyContextAtPosition(document, position);
+        const filePrefix = ctx.filePrefix;
+
+        const rankKey = (fullKey: string): number => {
+            if (filePrefix && ctx.classPrefix && ctx.functionPrefix && fullKey.startsWith(`${filePrefix}.${ctx.classPrefix}.${ctx.functionPrefix}.`)) {
+                return 0;
+            }
+            if (filePrefix && ctx.classPrefix && fullKey.startsWith(`${filePrefix}.${ctx.classPrefix}.`)) {
+                return 1;
+            }
+            if (filePrefix && ctx.functionPrefix && fullKey.startsWith(`${filePrefix}.${ctx.functionPrefix}.`)) {
+                return 2;
+            }
+            if (filePrefix && fullKey.startsWith(`${filePrefix}.general.`)) {
+                return 3;
+            }
+            if (filePrefix && fullKey.startsWith(`${filePrefix}.`)) {
+                return 4;
+            }
+            if (fullKey.startsWith('general.')) {
+                return 5;
+            }
+            return 9;
+        };
 
         const allKeys = [...this.index.getAllKeys()];
 
-        const relevantKeys = wantsQualified
+        let relevantKeys = wantsQualified
             ? allKeys
-            : filePrefix
-                ? allKeys.filter(k => k.startsWith(`${filePrefix}.`) || k.startsWith('general.'))
-                : allKeys;
+            : (() => {
+                const prefixes: string[] = [];
+                if (filePrefix && ctx.classPrefix && ctx.functionPrefix) {
+                    prefixes.push(`${filePrefix}.${ctx.classPrefix}.${ctx.functionPrefix}.`);
+                }
+                if (filePrefix && ctx.classPrefix) {
+                    prefixes.push(`${filePrefix}.${ctx.classPrefix}.`);
+                }
+                if (filePrefix && ctx.functionPrefix) {
+                    prefixes.push(`${filePrefix}.${ctx.functionPrefix}.`);
+                }
+                if (filePrefix) {
+                    prefixes.push(`${filePrefix}.`);
+                    prefixes.push(`${filePrefix}.general.`);
+                }
+                prefixes.push('general.');
+
+                const uniquePrefixes = [...new Set(prefixes)];
+                return allKeys.filter(k => uniquePrefixes.some(p => k.startsWith(p)));
+            })();
+
+        if (!wantsQualified && relevantKeys.length === 0) {
+            relevantKeys = allKeys;
+        }
 
         const items: vscode.CompletionItem[] = [];
 
@@ -61,8 +101,26 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
                 labelText = fullKey;
             } else {
                 insertText = fullKey;
-                if (filePrefix && fullKey.startsWith(`${filePrefix}.`)) {
-                    insertText = fullKey.slice(filePrefix.length + 1);
+                const stripPrefixes: string[] = [];
+                if (filePrefix && ctx.classPrefix && ctx.functionPrefix) {
+                    stripPrefixes.push(`${filePrefix}.${ctx.classPrefix}.${ctx.functionPrefix}.`);
+                }
+                if (filePrefix && ctx.classPrefix) {
+                    stripPrefixes.push(`${filePrefix}.${ctx.classPrefix}.`);
+                }
+                if (filePrefix && ctx.functionPrefix) {
+                    stripPrefixes.push(`${filePrefix}.${ctx.functionPrefix}.`);
+                }
+                if (filePrefix) {
+                    stripPrefixes.push(`${filePrefix}.`);
+                }
+                stripPrefixes.push('general.');
+
+                for (const p of stripPrefixes) {
+                    if (insertText.startsWith(p)) {
+                        insertText = insertText.slice(p.length);
+                        break;
+                    }
                 }
 
                 if (typedPrefix && !insertText.startsWith(typedPrefix)) {
@@ -75,7 +133,8 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
             const item = new vscode.CompletionItem(labelText, vscode.CompletionItemKind.Value);
             item.insertText = insertText;
             item.detail = translation ? `${translation}` : '⚠️ Not translated';
-            item.sortText = labelText;
+            const rank = rankKey(fullKey);
+            item.sortText = `${String(rank).padStart(2, '0')}:${labelText}`;
 
             items.push(item);
         }
