@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { LanguageIndex, ResolvedTranslation } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
 import { findLanguageKeysInString, getPythonStringAtPosition } from '../utils/pythonString';
-import { computeCandidateKeys } from '../utils/keyCandidates';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
 
@@ -11,42 +10,20 @@ function getFilePrefix(filename: string): string | undefined {
     return filename.replace(/\.py$/i, '') || undefined;
 }
 
-function getEnclosingFunctionName(document: vscode.TextDocument, position: vscode.Position): string | undefined {
-    const maxLinesUp = 250;
-    const startLine = position.line;
-    const startIndent = document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
-
-    for (let line = startLine; line >= 0 && startLine - line <= maxLinesUp; line--) {
-        const text = document.lineAt(line).text;
-        if (!text.trim()) continue;
-
-        const indent = document.lineAt(line).firstNonWhitespaceCharacterIndex;
-        if (indent > startIndent) continue;
-
-        const m = /^\s*(?:async\s+def|def)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/.exec(text);
-        if (m) return m[1];
+function computeCandidateKeys(rawKey: string, filePrefix: string | undefined): string[] {
+    const key = rawKey.trim();
+    if (!key) return [];
+    if (key.includes('.')) {
+        return [key];
     }
 
-    return undefined;
-}
-
-function getEnclosingClassName(document: vscode.TextDocument, position: vscode.Position): string | undefined {
-    const maxLinesUp = 400;
-    const startLine = position.line;
-    const startIndent = document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
-
-    for (let line = startLine; line >= 0 && startLine - line <= maxLinesUp; line--) {
-        const text = document.lineAt(line).text;
-        if (!text.trim()) continue;
-
-        const indent = document.lineAt(line).firstNonWhitespaceCharacterIndex;
-        if (indent > startIndent) continue;
-
-        const m = /^\s*class\s+([A-Za-z_][A-Za-z0-9_]*)\s*[(:]/.exec(text);
-        if (m) return m[1];
+    const candidates: string[] = [];
+    if (filePrefix) {
+        candidates.push(`${filePrefix}.${key}`);
     }
-
-    return undefined;
+    candidates.push(`general.${key}`);
+    candidates.push(key);
+    return candidates;
 }
 
 function escapeInlineCode(text: string): string {
@@ -157,12 +134,10 @@ export class EzCordHoverProvider implements vscode.HoverProvider {
         if (keysInString.length === 0) return null;
 
         const filePrefix = getFilePrefix(document.fileName.split(/[/\\]/).pop() ?? '');
-        const functionPrefix = getEnclosingFunctionName(document, position);
-        const classPrefix = getEnclosingClassName(document, position);
 
         const resolvedItems: Array<{ key: string; resolved: ResolvedTranslation }> = [];
         for (const rawKey of keysInString) {
-            const candidates = computeCandidateKeys(rawKey, { filePrefix, functionPrefix, classPrefix });
+            const candidates = computeCandidateKeys(rawKey, filePrefix);
             for (const candidate of candidates) {
                 const resolved = this.index.resolve(candidate, settings);
                 if (!resolved) continue;
