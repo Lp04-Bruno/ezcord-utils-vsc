@@ -56,6 +56,11 @@
           "id": "ezcordUtils.view",
           "name": "EzCord Utils",
           "icon": "src/assets/logo.png"
+        },
+        {
+          "id": "ezcordUtils.todoView",
+          "name": "TODO Comments",
+          "icon": "src/assets/todo_icon.png"
         }
       ]
     },
@@ -83,8 +88,26 @@
       {
         "command": "ezcordUtils.openTranslation",
         "title": "EzCord Utils: Open Translation in YAML"
+      },
+      {
+        "command": "ezcordUtils.openTodo",
+        "title": "Open TODO"
+      },
+      {
+        "command": "ezcordUtils.refreshTodos",
+        "title": "TODO Comments: Refresh",
+        "icon": "$(refresh)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ezcordUtils.refreshTodos",
+          "when": "view == ezcordUtils.todoView",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "EzCord Utils",
       "properties": {
