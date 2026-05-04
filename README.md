@@ -29,10 +29,13 @@ The extension looks at **Python string literals**.
 
 - Full keys like `level.settings.xp_modal.title` work directly.
 - Placeholders like `{general.ok}` inside longer strings are also detected.
-- If you type an unqualified key without dots (e.g. `"ok"`), the extension tries these candidates in order:
-   1. `<currentFileNameWithoutPy>.<key>`
-   2. `general.<key>`
-   3. `<key>`
+- If you type an unqualified key without dots (e.g. `"ok"`), the extension tries EzCord-like context candidates first:
+   1. `<currentFileNameWithoutPy>.<currentFunctionOrMethod>.<key>`
+   2. `<currentFileNameWithoutPy>.<currentClass>.<key>`
+   3. `<currentFileNameWithoutPy>.general.<key>`
+   4. `<currentFileNameWithoutPy>.<key>`
+   5. `general.<key>`
+   6. `<key>`
 
 ## Configuration
 

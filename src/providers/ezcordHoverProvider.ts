@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { LanguageIndex, ResolvedTranslation } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
-import { findLanguageKeysInString, getPythonStringAtPosition } from '../utils/pythonString';
+import { findLanguageKeysInString, getPythonContextAtPosition, getPythonStringAtPosition } from '../utils/pythonString';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
 
@@ -10,19 +10,29 @@ function getFilePrefix(filename: string): string | undefined {
     return filename.replace(/\.py$/i, '') || undefined;
 }
 
-function computeCandidateKeys(rawKey: string, filePrefix: string | undefined): string[] {
+function pushUnique(items: string[], value: string | undefined) {
+    if (!value || items.includes(value)) return;
+    items.push(value);
+}
+
+function computeCandidateKeys(
+    rawKey: string,
+    filePrefix: string | undefined,
+    functionName: string | undefined,
+    className: string | undefined
+): string[] {
     const key = rawKey.trim();
     if (!key) return [];
-    if (key.includes('.')) {
-        return [key];
-    }
 
     const candidates: string[] = [];
     if (filePrefix) {
-        candidates.push(`${filePrefix}.${key}`);
+        pushUnique(candidates, functionName ? `${filePrefix}.${functionName}.${key}` : undefined);
+        pushUnique(candidates, className ? `${filePrefix}.${className}.${key}` : undefined);
+        pushUnique(candidates, `${filePrefix}.general.${key}`);
+        pushUnique(candidates, `${filePrefix}.${key}`);
     }
-    candidates.push(`general.${key}`);
-    candidates.push(key);
+    pushUnique(candidates, `general.${key}`);
+    pushUnique(candidates, key);
     return candidates;
 }
 
@@ -134,10 +144,11 @@ export class EzCordHoverProvider implements vscode.HoverProvider {
         if (keysInString.length === 0) return null;
 
         const filePrefix = getFilePrefix(document.fileName.split(/[/\\]/).pop() ?? '');
+        const context = getPythonContextAtPosition(document, position);
 
         const resolvedItems: Array<{ key: string; resolved: ResolvedTranslation }> = [];
         for (const rawKey of keysInString) {
-            const candidates = computeCandidateKeys(rawKey, filePrefix);
+            const candidates = computeCandidateKeys(rawKey, filePrefix, context.functionName, context.className);
             for (const candidate of candidates) {
                 const resolved = this.index.resolve(candidate, settings);
                 if (!resolved) continue;

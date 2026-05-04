@@ -1,11 +1,16 @@
 import * as vscode from 'vscode';
 import { LanguageIndex } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
-import { getPythonStringAtPosition } from '../utils/pythonString';
+import { getPythonContextAtPosition, getPythonStringAtPosition } from '../utils/pythonString';
 
 function getFilePrefix(filename: string): string | undefined {
     if (!filename.endsWith('.py')) return undefined;
     return filename.replace(/\.py$/i, '') || undefined;
+}
+
+function pushUnique(items: string[], value: string | undefined) {
+    if (!value || items.includes(value)) return;
+    items.push(value);
 }
 
 export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
@@ -31,16 +36,27 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
 
         const settings = getEzCordUtilsSettings();
         const filePrefix = getFilePrefix(document.fileName.split(/[/\\]/).pop() ?? '');
+        const context = getPythonContextAtPosition(document, position);
 
         const allKeys = [...this.index.getAllKeys()];
+
+        const unqualifiedPrefixes: string[] = [];
+        if (filePrefix) {
+            pushUnique(unqualifiedPrefixes, context.functionName ? `${filePrefix}.${context.functionName}.` : undefined);
+            pushUnique(unqualifiedPrefixes, context.className ? `${filePrefix}.${context.className}.` : undefined);
+            pushUnique(unqualifiedPrefixes, `${filePrefix}.general.`);
+            pushUnique(unqualifiedPrefixes, `${filePrefix}.`);
+        }
+        pushUnique(unqualifiedPrefixes, 'general.');
 
         const relevantKeys = wantsQualified
             ? allKeys
             : filePrefix
-                ? allKeys.filter(k => k.startsWith(`${filePrefix}.`) || k.startsWith('general.'))
+                ? allKeys.filter(k => unqualifiedPrefixes.some(prefix => k.startsWith(prefix)))
                 : allKeys;
 
         const items: vscode.CompletionItem[] = [];
+        const seenLabels = new Set<string>();
 
         for (const fullKey of relevantKeys) {
             const resolved = this.index.resolve(fullKey, settings);
@@ -61,8 +77,11 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
                 labelText = fullKey;
             } else {
                 insertText = fullKey;
-                if (filePrefix && fullKey.startsWith(`${filePrefix}.`)) {
-                    insertText = fullKey.slice(filePrefix.length + 1);
+                for (const prefix of unqualifiedPrefixes) {
+                    if (fullKey.startsWith(prefix)) {
+                        insertText = fullKey.slice(prefix.length);
+                        break;
+                    }
                 }
 
                 if (typedPrefix && !insertText.startsWith(typedPrefix)) {
@@ -71,6 +90,11 @@ export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
 
                 labelText = insertText;
             }
+
+            if (seenLabels.has(labelText)) {
+                continue;
+            }
+            seenLabels.add(labelText);
 
             const item = new vscode.CompletionItem(labelText, vscode.CompletionItemKind.Value);
             item.insertText = insertText;

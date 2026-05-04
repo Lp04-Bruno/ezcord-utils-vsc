@@ -6,6 +6,11 @@ export interface PythonStringAtPosition {
     range: vscode.Range;
 }
 
+export interface PythonContextAtPosition {
+    functionName?: string;
+    className?: string;
+}
+
 function isEscaped(text: string, index: number): boolean {
     let backslashes = 0;
     for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) {
@@ -36,7 +41,9 @@ export function getPythonStringAtPosition(
         }
     }
 
-    if (start < 0 || !quote) return undefined;
+    if (start < 0 || !quote) {
+        return getTripleQuotedPythonStringAtPosition(document, position);
+    }
 
     let end = -1;
     for (let i = start + 1; i < text.length; i++) {
@@ -46,7 +53,9 @@ export function getPythonStringAtPosition(
         }
     }
 
-    if (end < 0) return undefined;
+    if (end < 0) {
+        return getTripleQuotedPythonStringAtPosition(document, position);
+    }
 
     if (char < start + 1 || char > end) return undefined;
 
@@ -57,6 +66,84 @@ export function getPythonStringAtPosition(
     );
 
     return { quote, value, range };
+}
+
+function getTripleQuotedPythonStringAtPosition(
+    document: vscode.TextDocument,
+    position: vscode.Position
+): PythonStringAtPosition | undefined {
+    const text = document.getText();
+    const offset = document.offsetAt(position);
+
+    for (const quote of ['"', "'"] as const) {
+        const delimiter = quote.repeat(3);
+        let start = -1;
+        let searchFrom = 0;
+
+        while (true) {
+            const next = text.indexOf(delimiter, searchFrom);
+            if (next < 0 || next > offset) break;
+            if (!isEscaped(text, next)) {
+                start = next;
+            }
+            searchFrom = next + delimiter.length;
+        }
+
+        if (start < 0) continue;
+
+        const contentStart = start + delimiter.length;
+        const end = text.indexOf(delimiter, contentStart);
+        if (end < 0 || offset < contentStart || offset > end) continue;
+
+        const value = text.slice(contentStart, end);
+        return {
+            quote,
+            value,
+            range: new vscode.Range(document.positionAt(contentStart), document.positionAt(end)),
+        };
+    }
+
+    return undefined;
+}
+
+export function getPythonContextAtPosition(
+    document: vscode.TextDocument,
+    position: vscode.Position
+): PythonContextAtPosition {
+    const stack: Array<{ indent: number; kind: 'class' | 'def'; name: string }> = [];
+
+    const popClosedBlocks = (indent: number) => {
+        while (stack.length > 0 && indent <= stack[stack.length - 1].indent) {
+            stack.pop();
+        }
+    };
+
+    for (let lineIndex = 0; lineIndex <= position.line; lineIndex++) {
+        const text = document.lineAt(lineIndex).text;
+        const trimmed = text.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+
+        const indent = text.length - text.trimStart().length;
+        popClosedBlocks(indent);
+
+        if (trimmed.startsWith('@')) continue;
+
+        const classMatch = trimmed.match(/^class\s+([A-Za-z_][A-Za-z0-9_]*)\b/);
+        if (classMatch) {
+            stack.push({ indent, kind: 'class', name: classMatch[1] });
+            continue;
+        }
+
+        const defMatch = trimmed.match(/^(?:async\s+def|def)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/);
+        if (defMatch) {
+            stack.push({ indent, kind: 'def', name: defMatch[1] });
+        }
+    }
+
+    const className = [...stack].reverse().find(item => item.kind === 'class')?.name;
+    const functionName = [...stack].reverse().find(item => item.kind === 'def')?.name;
+
+    return { className, functionName };
 }
 
 export function findLanguageKeysInString(value: string): string[] {

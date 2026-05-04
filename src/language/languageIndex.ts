@@ -28,8 +28,54 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isScalar(value: unknown): boolean {
+    return value == null || ['string', 'number', 'boolean'].includes(typeof value);
+}
+
+function summarizeYamlValue(value: unknown): string {
+    if (Array.isArray(value)) {
+        return value.map(v => summarizeYamlValue(v)).join(', ');
+    }
+
+    if (isRecord(value)) {
+        return Object.entries(value)
+            .slice(0, 8)
+            .map(([k, v]) => `${k}: ${summarizeYamlValue(v)}`)
+            .join('\n');
+    }
+
+    return value == null ? '' : String(value);
+}
+
+function isPluralizationMap(value: Record<string, unknown>): boolean {
+    const pluralKeys = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
+    const entries = Object.entries(value);
+    return entries.length > 0 && entries.every(([k, v]) => (pluralKeys.has(k) || /^\d+$/.test(k)) && (isScalar(v) || Array.isArray(v)));
+}
+
+function isEmbedLikeMap(value: Record<string, unknown>): boolean {
+    const embedKeys = new Set([
+        'title',
+        'description',
+        'url',
+        'color',
+        'fields',
+        'footer',
+        'author',
+        'image',
+        'thumbnail',
+        'timestamp',
+    ]);
+
+    return Object.keys(value).some(k => embedKeys.has(k));
+}
+
 function flattenYaml(value: unknown, prefix: string, out: Map<string, string>) {
     if (isRecord(value)) {
+        if (prefix && (isPluralizationMap(value) || isEmbedLikeMap(value))) {
+            out.set(prefix, summarizeYamlValue(value));
+        }
+
         for (const [k, v] of Object.entries(value)) {
             const nextPrefix = prefix ? `${prefix}.${k}` : k;
             flattenYaml(v, nextPrefix, out);
@@ -85,8 +131,14 @@ async function resolveLanguageFolderUri(languageFolderPath: string): Promise<vsc
     return root ? vscode.Uri.joinPath(root, languageFolderPath) : undefined;
 }
 
-function languageFromFilename(filename: string): LanguageCode {
-    return filename.replace(/\.(ya?ml)$/i, '');
+function normalizeLocaleName(locale: string): LanguageCode {
+    const cleaned = locale.replace(/_/g, '-');
+    const parts = cleaned.split('-').filter(Boolean);
+    if (parts.length === 1) {
+        return parts[0].toLowerCase();
+    }
+
+    return `${parts[0].toLowerCase()}-${parts.slice(1).join('-').toUpperCase()}`;
 }
 
 function findYamlKeyLocations(text: string): Map<string, { position: vscode.Position; keyText: string }> {
@@ -212,7 +264,7 @@ export class LanguageIndex {
     }
 
     public getKeyLocation(language: LanguageCode, key: string): YamlKeyLocation | undefined {
-        return this.locationsByLanguage.get(language)?.get(key);
+        return this.getLanguageMap(this.locationsByLanguage, language)?.get(key);
     }
 
     public getAnyKeyLocation(key: string): YamlKeyLocation | undefined {
@@ -224,15 +276,17 @@ export class LanguageIndex {
     }
 
     public resolve(key: string, settings: EzCordUtilsSettings): ResolvedTranslation | undefined {
-        const defaultMap = this.byLanguage.get(settings.defaultLanguage);
-        const fallbackMap = this.byLanguage.get(settings.fallbackLanguage);
+        const defaultLanguage = this.resolveLanguageCode(settings.defaultLanguage) ?? settings.defaultLanguage;
+        const fallbackLanguage = this.resolveLanguageCode(settings.fallbackLanguage) ?? settings.fallbackLanguage;
+        const defaultMap = this.getLanguageMap(this.byLanguage, settings.defaultLanguage);
+        const fallbackMap = this.getLanguageMap(this.byLanguage, settings.fallbackLanguage);
 
         const fromDefault = defaultMap?.get(key);
         if (fromDefault != null) {
             return {
                 key,
                 value: fromDefault,
-                language: settings.defaultLanguage,
+                language: defaultLanguage,
                 fromDefaultLanguage: true,
             };
         }
@@ -242,7 +296,7 @@ export class LanguageIndex {
             return {
                 key,
                 value: fromFallback,
-                language: settings.fallbackLanguage,
+                language: fallbackLanguage,
                 fromDefaultLanguage: false,
             };
         }
@@ -256,6 +310,45 @@ export class LanguageIndex {
                     language: lang,
                     fromDefaultLanguage: false,
                 };
+            }
+        }
+
+        return undefined;
+    }
+
+    private getLanguageVariants(language: LanguageCode): LanguageCode[] {
+        const normalized = normalizeLocaleName(language);
+        const base = normalized.split('-')[0];
+        const variants = [language, normalized, normalized.toLowerCase(), base];
+
+        if (base === 'en') {
+            variants.push('en-US', 'en-GB', 'en');
+        }
+
+        return [...new Set(variants.filter(Boolean))];
+    }
+
+    private resolveLanguageCode(language: LanguageCode): LanguageCode | undefined {
+        for (const variant of this.getLanguageVariants(language)) {
+            if (this.byLanguage.has(variant)) {
+                return variant;
+            }
+        }
+
+        const normalized = normalizeLocaleName(language).toLowerCase();
+        return [...this.byLanguage.keys()].find(lang => normalizeLocaleName(lang).toLowerCase() === normalized);
+    }
+
+    private getLanguageMap<T>(maps: Map<LanguageCode, Map<string, T>>, language: LanguageCode): Map<string, T> | undefined {
+        for (const variant of this.getLanguageVariants(language)) {
+            const map = maps.get(variant);
+            if (map) return map;
+        }
+
+        const normalized = normalizeLocaleName(language).toLowerCase();
+        for (const [lang, map] of maps.entries()) {
+            if (normalizeLocaleName(lang).toLowerCase() === normalized) {
+                return map;
             }
         }
 
@@ -316,18 +409,19 @@ export class LanguageIndex {
         const def = settings?.defaultLanguage;
 
         const stem = path.basename(file.fsPath).replace(/\.(ya?ml)$/i, '');
-        const direct = stem.match(/^[a-z]{2,5}$/i);
+        const direct = stem.match(/^[a-z]{2,3}(?:[-_][a-z]{2})?$/i);
         if (direct) {
-            return { language: stem.toLowerCase(), isTagged: true };
+            return { language: normalizeLocaleName(stem), isTagged: true };
         }
 
         const suffixMatch = stem.match(/^(.*?)[_-]([a-z]{2,5})$/i);
         if (suffixMatch) {
             const base = suffixMatch[1].toLowerCase();
-            const lang = suffixMatch[2].toLowerCase();
+            const lang = normalizeLocaleName(suffixMatch[2]);
             const langsForBase = infoByBase.get(base);
             const hasMultiple = !!langsForBase && langsForBase.size >= 2;
-            const isPreferred = (def && lang === def.toLowerCase()) || (fallback && lang === fallback.toLowerCase());
+            const isPreferred = (def && lang.toLowerCase() === normalizeLocaleName(def).toLowerCase()) ||
+                (fallback && lang.toLowerCase() === normalizeLocaleName(fallback).toLowerCase());
             if (hasMultiple || isPreferred) {
                 return { language: lang, isTagged: true };
             }
@@ -339,12 +433,12 @@ export class LanguageIndex {
         const parts = rel.split('/').filter(Boolean);
         if (parts.length >= 2) {
             const maybeLang = parts[parts.length - 2];
-            if (/^[a-z]{2,5}$/i.test(maybeLang)) {
-                return { language: maybeLang.toLowerCase(), isTagged: true };
+            if (/^[a-z]{2,3}(?:[-_][a-z]{2})?$/i.test(maybeLang)) {
+                return { language: normalizeLocaleName(maybeLang), isTagged: true };
             }
         }
 
-        return { language: (def ?? 'en').toLowerCase(), isTagged: false };
+        return { language: normalizeLocaleName(def ?? 'en'), isTagged: false };
     }
 
     private async loadOnce(folderUri: vscode.Uri, settings: EzCordUtilsSettings | undefined): Promise<void> {
@@ -360,7 +454,7 @@ export class LanguageIndex {
             const m = stem.match(/^(.*?)[_-]([a-z]{2,5})$/i);
             if (!m) continue;
             const base = m[1].toLowerCase();
-            const lang = m[2].toLowerCase();
+            const lang = normalizeLocaleName(m[2]);
             const set = infoByBase.get(base) ?? new Set<string>();
             set.add(lang);
             infoByBase.set(base, set);
