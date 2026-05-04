@@ -23,6 +23,7 @@ Thumbs.db
 # Environment
 .env
 .env.*
+*.code-workspace
 
 # Logs
 logs/
