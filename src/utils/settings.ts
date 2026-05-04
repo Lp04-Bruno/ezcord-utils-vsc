@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { EzCordUtilsSettings } from '../language/languageIndex';
 
+export type YamlUsageNavigationMode = 'off' | 'inline' | 'hover';
+
 function normalizeSettingString(value: string): string {
     let v = value.trim();
     const m = v.match(/^(['"])(.*)\1$/);
@@ -14,6 +16,18 @@ function normalizeSettingString(value: string): string {
 function normalizePathSetting(value: string): string {
     const v = normalizeSettingString(value);
     return v.replace(/\\/g, '/');
+}
+
+export function getYamlUsageNavigationMode(): YamlUsageNavigationMode {
+    const value = vscode.workspace
+        .getConfiguration('ezcordUtils')
+        .get<string>('yamlUsageNavigation', 'off');
+
+    if (value === 'inline' || value === 'hover') {
+        return value;
+    }
+
+    return 'off';
 }
 
 export function getEzCordUtilsSettings(): EzCordUtilsSettings {

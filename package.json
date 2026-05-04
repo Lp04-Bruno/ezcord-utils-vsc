@@ -37,7 +37,8 @@
     "vscode": "^1.75.0"
   },
   "activationEvents": [
-    "onLanguage:python"
+    "onLanguage:python",
+    "onLanguage:yaml"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -83,6 +84,10 @@
       {
         "command": "ezcordUtils.openTranslation",
         "title": "EzCord Utils: Open Translation in YAML"
+      },
+      {
+        "command": "ezcordUtils.openKeyUsage",
+        "title": "EzCord Utils: Open Language Key Usage"
       }
     ],
     "configuration": {
@@ -102,6 +107,21 @@
           "type": "string",
           "default": "en",
           "description": "Fallback language filename prefix (e.g. en). Used if the key is missing in the default language."
+        },
+        "ezcordUtils.yamlUsageNavigation": {
+          "type": "string",
+          "default": "off",
+          "enum": [
+            "off",
+            "inline",
+            "hover"
+          ],
+          "enumDescriptions": [
+            "Only show usage count badges in the YAML gutter.",
+            "Show inline CodeLens jump actions above used YAML keys.",
+            "Show a hover popup on used YAML keys with links back to Python usages."
+          ],
+          "description": "Controls how YAML language keys link back to Python usages. Usage count badges in the gutter are always shown for used leaf keys."
         }
       }
     }

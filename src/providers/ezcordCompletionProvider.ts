@@ -2,16 +2,7 @@ import * as vscode from 'vscode';
 import { LanguageIndex } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
 import { getPythonContextAtPosition, getPythonStringAtPosition } from '../utils/pythonString';
-
-function getFilePrefix(filename: string): string | undefined {
-    if (!filename.endsWith('.py')) return undefined;
-    return filename.replace(/\.py$/i, '') || undefined;
-}
-
-function pushUnique(items: string[], value: string | undefined) {
-    if (!value || items.includes(value)) return;
-    items.push(value);
-}
+import { getFilePrefix, pushUnique } from '../utils/keyResolution';
 
 export class EzCordCompletionProvider implements vscode.CompletionItemProvider {
     constructor(private readonly index: LanguageIndex) { }

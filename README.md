@@ -9,6 +9,7 @@ This extension indexes your YAML language files and provides hover tooltips, aut
 - **Hover translations** for i18n keys inside Python string literals.
 - **Autocomplete** for keys while typing.
 - **Jump to YAML**: open the correct language YAML and reveal the key.
+- **Jump back to Python usage**: YAML leaf keys get gutter badges (`0` in orange for unused keys, green counts for used keys) and optional inline or hover navigation.
 - **Language Keys Overview** tab: for the active Python file, shows keys for `<file>.*` plus `general.*` with one-click jump.
 - **Sidebar (Activity Bar)** with stats and quick actions.
 - **Auto-reload** when language files change.
@@ -48,6 +49,10 @@ Open Settings and search for **EzCord Utils** (or edit `settings.json`).
    - Preferred language prefix (for example `en` for `en.yaml`).
 - `ezcordUtils.fallbackLanguage` (default: `en`)
    - Used if the key is missing in the default language.
+- `ezcordUtils.yamlUsageNavigation` (default: `off`)
+   - `off`: only show usage badges in the YAML gutter.
+   - `inline`: show clickable CodeLens jump actions above used YAML keys.
+   - `hover`: show a hover popup on used YAML keys with links back to Python usages.
 
 ## Commands
 

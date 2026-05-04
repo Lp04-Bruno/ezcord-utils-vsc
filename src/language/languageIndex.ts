@@ -11,6 +11,11 @@ export interface YamlKeyLocation {
     keyText: string;
 }
 
+export interface IndexedYamlKeyLocation extends YamlKeyLocation {
+    key: string;
+    language: LanguageCode;
+}
+
 export interface ResolvedTranslation {
     key: string;
     value: string;
@@ -150,6 +155,7 @@ function findYamlKeyLocations(text: string): Map<string, { position: vscode.Posi
     const lines = text.split(/\r?\n/);
 
     const stack: Array<{ indent: number; prefix: string }> = [{ indent: -1, prefix: '' }];
+    let blockScalarIndent: number | undefined;
 
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         const rawLine = lines[lineIndex];
@@ -160,17 +166,19 @@ function findYamlKeyLocations(text: string): Map<string, { position: vscode.Posi
         if (trimmedLeft.startsWith('#')) continue;
 
         const indent = rawLine.length - trimmedLeft.length;
+        if (blockScalarIndent != null) {
+            if (indent > blockScalarIndent) {
+                continue;
+            }
+
+            blockScalarIndent = undefined;
+        }
 
         let keyStartCol = indent;
         let content = trimmedLeft;
 
         if (content.startsWith('-')) {
-            const afterDash = content.slice(1);
-            const afterDashTrim = afterDash.trimStart();
-            if (afterDashTrim.length === afterDash.length) continue;
-            const dashSpaces = afterDash.length - afterDashTrim.length;
-            keyStartCol = indent + 1 + dashSpaces;
-            content = afterDashTrim;
+            continue;
         }
 
         const match = content.match(/^([^:#]+?):\s*(.*)$/);
@@ -188,7 +196,10 @@ function findYamlKeyLocations(text: string): Map<string, { position: vscode.Posi
         locations.set(fullKey, { position: new vscode.Position(lineIndex, keyStartCol), keyText });
 
         const rest = match[2] ?? '';
-        if (rest.trim().length === 0) {
+        const trimmedRest = rest.trim();
+        if (/^[|>][+-]?\d*$/.test(trimmedRest)) {
+            blockScalarIndent = indent;
+        } else if (trimmedRest.length === 0) {
             stack.push({ indent, prefix: fullKey });
         }
     }
@@ -277,6 +288,46 @@ export class LanguageIndex {
             if (loc) return loc;
         }
         return undefined;
+    }
+
+    public getKeyLocationsForUri(uri: vscode.Uri): IndexedYamlKeyLocation[] {
+        const locations: IndexedYamlKeyLocation[] = [];
+        const target = uri.toString();
+
+        for (const [language, map] of this.locationsByLanguage.entries()) {
+            for (const [key, loc] of map.entries()) {
+                if (loc.uri.toString() === target) {
+                    locations.push({ ...loc, key, language });
+                }
+            }
+        }
+
+        return locations.sort((a, b) => a.position.line - b.position.line || a.position.character - b.position.character);
+    }
+
+    public getLeafKeyLocationsForUri(uri: vscode.Uri): IndexedYamlKeyLocation[] {
+        const target = uri.toString();
+        const locations: IndexedYamlKeyLocation[] = [];
+
+        for (const [language, map] of this.locationsByLanguage.entries()) {
+            for (const [key, loc] of map.entries()) {
+                if (loc.uri.toString() !== target) continue;
+                if (this.hasChildKey(map, key)) continue;
+                locations.push({ ...loc, key, language });
+            }
+        }
+
+        return locations.sort((a, b) => a.position.line - b.position.line || a.position.character - b.position.character);
+    }
+
+    private hasChildKey(map: Map<string, unknown>, key: string): boolean {
+        const childPrefix = `${key}.`;
+        for (const candidate of map.keys()) {
+            if (candidate.startsWith(childPrefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public resolve(key: string, settings: EzCordUtilsSettings): ResolvedTranslation | undefined {

@@ -2,39 +2,9 @@ import * as vscode from 'vscode';
 import { LanguageIndex, ResolvedTranslation } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
 import { findLanguageKeyMatchesInString, getPythonContextAtPosition, getPythonStringAtPosition } from '../utils/pythonString';
+import { computeCandidateKeys, getFilePrefix } from '../utils/keyResolution';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
-
-function getFilePrefix(filename: string): string | undefined {
-    if (!filename.endsWith('.py')) return undefined;
-    return filename.replace(/\.py$/i, '') || undefined;
-}
-
-function pushUnique(items: string[], value: string | undefined) {
-    if (!value || items.includes(value)) return;
-    items.push(value);
-}
-
-function computeCandidateKeys(
-    rawKey: string,
-    filePrefix: string | undefined,
-    functionName: string | undefined,
-    className: string | undefined
-): string[] {
-    const key = rawKey.trim();
-    if (!key) return [];
-
-    const candidates: string[] = [];
-    if (filePrefix) {
-        pushUnique(candidates, functionName ? `${filePrefix}.${functionName}.${key}` : undefined);
-        pushUnique(candidates, className ? `${filePrefix}.${className}.${key}` : undefined);
-        pushUnique(candidates, `${filePrefix}.general.${key}`);
-        pushUnique(candidates, `${filePrefix}.${key}`);
-    }
-    pushUnique(candidates, `general.${key}`);
-    pushUnique(candidates, key);
-    return candidates;
-}
 
 function escapeInlineCode(text: string): string {
     return text.replace(/`/g, '\\`').replace(/\r?\n/g, ' ');
@@ -152,7 +122,11 @@ export class EzCordHoverProvider implements vscode.HoverProvider {
 
         const resolvedItems: Array<{ key: string; resolved: ResolvedTranslation }> = [];
         for (const rawKey of keysAtPosition) {
-            const candidates = computeCandidateKeys(rawKey, filePrefix, context.functionName, context.className);
+            const candidates = computeCandidateKeys(rawKey, {
+                filePrefix,
+                functionName: context.functionName,
+                className: context.className,
+            });
             for (const candidate of candidates) {
                 const resolved = this.index.resolve(candidate, settings);
                 if (!resolved) continue;
