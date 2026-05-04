@@ -4,6 +4,19 @@ All notable changes to this extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows semantic versioning.
 
+## [0.1.2] - 2026-05-04
+
+### Changed
+- Improve EzCord i18n key resolution to consider the current Python file, function/method, class, file-local `general`, global `general` and absolute keys.
+- Improve autocomplete suggestions for unqualified keys by preferring the current EzCord lookup context.
+- Support Discord locale-style language files such as `en-US.yaml` and `de-DE.yaml` more consistently.
+
+### Fixed
+- Update `yaml` to `^2.8.4` and `esbuild` to `^0.28.0` to resolve npm audit security advisories.
+- Resolve hover translations for pluralization maps such as `one`/`many` and embed-like YAML sections.
+- Detect language keys inside Python triple-quoted strings.
+- Avoid assigning decorator strings to the previous Python method context.
+
 ## [0.1.1] - 2026-01-03
 
 ### Added
@@ -46,6 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 - Tolerant parsing for common non-strict YAML quirks.
 
+[0.1.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.2
 [0.1.1]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.0
 [0.0.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.0.2
