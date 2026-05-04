@@ -141,6 +141,10 @@ function normalizeLocaleName(locale: string): LanguageCode {
     return `${parts[0].toLowerCase()}-${parts.slice(1).join('-').toUpperCase()}`;
 }
 
+function localeBase(locale: string): string {
+    return normalizeLocaleName(locale).split('-')[0].toLowerCase();
+}
+
 function findYamlKeyLocations(text: string): Map<string, { position: vscode.Position; keyText: string }> {
     const locations = new Map<string, { position: vscode.Position; keyText: string }>();
     const lines = text.split(/\r?\n/);
@@ -366,6 +370,23 @@ export class LanguageIndex {
         return results;
     }
 
+    public resolveConfiguredLanguages(key: string, settings: EzCordUtilsSettings): Map<LanguageCode, string> {
+        const results = new Map<LanguageCode, string>();
+        const configured = [settings.defaultLanguage, settings.fallbackLanguage];
+
+        for (const configuredLang of configured) {
+            const language = this.resolveLanguageCode(configuredLang) ?? normalizeLocaleName(configuredLang);
+            if (results.has(language)) continue;
+
+            const value = this.getLanguageMap(this.byLanguage, configuredLang)?.get(key);
+            if (value != null) {
+                results.set(language, value);
+            }
+        }
+
+        return results;
+    }
+
     public async loadAndWatch(settings: EzCordUtilsSettings): Promise<void> {
         this.lastSettings = settings;
         const folderUri = await resolveLanguageFolderUri(settings.languageFolderPath);
@@ -468,7 +489,11 @@ export class LanguageIndex {
             try {
                 const raw = await vscode.workspace.fs.readFile(file);
                 const text = Buffer.from(raw).toString('utf8');
-                const { language: lang } = this.guessLanguageForFile(folderUri, file, infoByBase, settings);
+                const { language: lang, isTagged } = this.guessLanguageForFile(folderUri, file, infoByBase, settings);
+                if (isTagged && settings && !this.isConfiguredLanguage(lang, settings)) {
+                    this.output.appendLine(`[EzCord Utils] Skipped unconfigured language file: ${file.fsPath} (detected: ${lang})`);
+                    continue;
+                }
 
                 const keyLocations = findYamlKeyLocations(text);
                 const existingLocations = nextLocationsByLanguage.get(lang) ?? new Map<string, YamlKeyLocation>();
@@ -524,5 +549,15 @@ export class LanguageIndex {
         this.output.appendLine(`[EzCord Utils] Loaded ${this.lastLoadedFileCount} YAML files; ${this.lastLoadedKeyCount} keys.`);
         this.lastLoadedAt = new Date();
         this.onDidUpdateEmitter.fire();
+    }
+
+    private isConfiguredLanguage(language: LanguageCode, settings: EzCordUtilsSettings): boolean {
+        const detected = normalizeLocaleName(language).toLowerCase();
+        const detectedBase = localeBase(language);
+
+        return [settings.defaultLanguage, settings.fallbackLanguage].some(configured => {
+            const normalized = normalizeLocaleName(configured).toLowerCase();
+            return detected === normalized || detectedBase === localeBase(configured);
+        });
     }
 }

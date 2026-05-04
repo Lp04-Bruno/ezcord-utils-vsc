@@ -11,6 +11,12 @@ export interface PythonContextAtPosition {
     className?: string;
 }
 
+export interface LanguageKeyMatch {
+    key: string;
+    start: number;
+    end: number;
+}
+
 function isEscaped(text: string, index: number): boolean {
     let backslashes = 0;
     for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) {
@@ -77,30 +83,43 @@ function getTripleQuotedPythonStringAtPosition(
 
     for (const quote of ['"', "'"] as const) {
         const delimiter = quote.repeat(3);
-        let start = -1;
         let searchFrom = 0;
 
         while (true) {
-            const next = text.indexOf(delimiter, searchFrom);
-            if (next < 0 || next > offset) break;
-            if (!isEscaped(text, next)) {
-                start = next;
+            const start = text.indexOf(delimiter, searchFrom);
+            if (start < 0 || start > offset) break;
+
+            searchFrom = start + delimiter.length;
+            if (isEscaped(text, start)) {
+                continue;
             }
-            searchFrom = next + delimiter.length;
+
+            const contentStart = start + delimiter.length;
+            let endSearchFrom = contentStart;
+            let end = -1;
+
+            while (true) {
+                const candidate = text.indexOf(delimiter, endSearchFrom);
+                if (candidate < 0) break;
+                endSearchFrom = candidate + delimiter.length;
+                if (!isEscaped(text, candidate)) {
+                    end = candidate;
+                    break;
+                }
+            }
+
+            if (end < 0) break;
+            if (offset >= contentStart && offset <= end) {
+                const value = text.slice(contentStart, end);
+                return {
+                    quote,
+                    value,
+                    range: new vscode.Range(document.positionAt(contentStart), document.positionAt(end)),
+                };
+            }
+
+            searchFrom = end + delimiter.length;
         }
-
-        if (start < 0) continue;
-
-        const contentStart = start + delimiter.length;
-        const end = text.indexOf(delimiter, contentStart);
-        if (end < 0 || offset < contentStart || offset > end) continue;
-
-        const value = text.slice(contentStart, end);
-        return {
-            quote,
-            value,
-            range: new vscode.Range(document.positionAt(contentStart), document.positionAt(end)),
-        };
     }
 
     return undefined;
@@ -147,24 +166,36 @@ export function getPythonContextAtPosition(
 }
 
 export function findLanguageKeysInString(value: string): string[] {
+    return [...new Set(findLanguageKeyMatchesInString(value).map(match => match.key))];
+}
+
+export function findLanguageKeyMatchesInString(value: string): LanguageKeyMatch[] {
     const keys = new Set<string>();
+    const matches: LanguageKeyMatch[] = [];
 
     const isKeyLike = (s: string) => /^[A-Za-z0-9_.-]+$/.test(s.replace(/_/g, '-'));
 
     const trimmed = value.trim();
     if (trimmed && isKeyLike(trimmed)) {
-        keys.add(trimmed);
+        const start = value.length - value.trimStart().length;
+        if (!keys.has(trimmed)) {
+            keys.add(trimmed);
+            matches.push({ key: trimmed, start, end: start + trimmed.length });
+        }
     }
 
     const braceRe = /\{([^{}]+)\}/g;
     let m: RegExpExecArray | null;
     while ((m = braceRe.exec(value)) !== null) {
-        const inside = m[1].trim();
+        const rawInside = m[1];
+        const inside = rawInside.trim();
         if (!inside) continue;
         if (isKeyLike(inside)) {
-            keys.add(inside);
+            const leadingWhitespace = rawInside.length - rawInside.trimStart().length;
+            const start = m.index + 1 + leadingWhitespace;
+            matches.push({ key: inside, start, end: start + inside.length });
         }
     }
 
-    return [...keys];
+    return matches;
 }

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { LanguageIndex, ResolvedTranslation } from '../language/languageIndex';
 import { getEzCordUtilsSettings } from '../utils/settings';
-import { findLanguageKeysInString, getPythonContextAtPosition, getPythonStringAtPosition } from '../utils/pythonString';
+import { findLanguageKeyMatchesInString, getPythonContextAtPosition, getPythonStringAtPosition } from '../utils/pythonString';
 
 const OPEN_TRANSLATION_COMMAND = 'ezcordUtils.openTranslation';
 
@@ -92,7 +92,8 @@ function appendTranslationSection(
 
 function buildHoverMarkdown(
     items: Array<{ key: string; resolved: ResolvedTranslation }>,
-    index: LanguageIndex
+    index: LanguageIndex,
+    settings: ReturnType<typeof getEzCordUtilsSettings>
 ): vscode.MarkdownString {
     const md = new vscode.MarkdownString('', true);
 
@@ -105,7 +106,7 @@ function buildHoverMarkdown(
 
     const slice = items.slice(0, 6);
     slice.forEach((it, idx) => {
-        const all = index.resolveAllLanguages(it.resolved.key);
+        const all = index.resolveConfiguredLanguages(it.resolved.key, settings);
         appendTranslationSection(md, it.key, it.resolved, all);
         if (idx !== slice.length - 1) {
             md.appendMarkdown('\n\n---\n\n');
@@ -140,14 +141,17 @@ export class EzCordHoverProvider implements vscode.HoverProvider {
         const pyStr = getPythonStringAtPosition(document, position);
         if (!pyStr) return null;
 
-        const keysInString = findLanguageKeysInString(pyStr.value);
-        if (keysInString.length === 0) return null;
+        const offsetInString = document.offsetAt(position) - document.offsetAt(pyStr.range.start);
+        const keysAtPosition = findLanguageKeyMatchesInString(pyStr.value)
+            .filter(match => offsetInString >= match.start && offsetInString <= match.end)
+            .map(match => match.key);
+        if (keysAtPosition.length === 0) return null;
 
         const filePrefix = getFilePrefix(document.fileName.split(/[/\\]/).pop() ?? '');
         const context = getPythonContextAtPosition(document, position);
 
         const resolvedItems: Array<{ key: string; resolved: ResolvedTranslation }> = [];
-        for (const rawKey of keysInString) {
+        for (const rawKey of keysAtPosition) {
             const candidates = computeCandidateKeys(rawKey, filePrefix, context.functionName, context.className);
             for (const candidate of candidates) {
                 const resolved = this.index.resolve(candidate, settings);
@@ -159,7 +163,8 @@ export class EzCordHoverProvider implements vscode.HoverProvider {
 
         if (resolvedItems.length === 0) return null;
 
-        const md = buildHoverMarkdown(resolvedItems, this.index);
-        return new vscode.Hover(md, pyStr.range);
+        const md = buildHoverMarkdown(resolvedItems, this.index, settings);
+        const hoverRange = document.getWordRangeAtPosition(position, /[A-Za-z0-9_.-]+/) ?? pyStr.range;
+        return new vscode.Hover(md, hoverRange);
     }
 }
