@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { parse as parseYaml } from 'yaml';
 import { parseYamlToFlatMap } from './simpleYaml';
+import { findYamlKeyLocations } from './yamlKeyLocations';
 
 export type LanguageCode = string;
 
@@ -148,63 +149,6 @@ function normalizeLocaleName(locale: string): LanguageCode {
 
 function localeBase(locale: string): string {
     return normalizeLocaleName(locale).split('-')[0].toLowerCase();
-}
-
-function findYamlKeyLocations(text: string): Map<string, { position: vscode.Position; keyText: string }> {
-    const locations = new Map<string, { position: vscode.Position; keyText: string }>();
-    const lines = text.split(/\r?\n/);
-
-    const stack: Array<{ indent: number; prefix: string }> = [{ indent: -1, prefix: '' }];
-    let blockScalarIndent: number | undefined;
-
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        const rawLine = lines[lineIndex];
-        if (!rawLine) continue;
-
-        const trimmedLeft = rawLine.trimStart();
-        if (!trimmedLeft) continue;
-        if (trimmedLeft.startsWith('#')) continue;
-
-        const indent = rawLine.length - trimmedLeft.length;
-        if (blockScalarIndent != null) {
-            if (indent > blockScalarIndent) {
-                continue;
-            }
-
-            blockScalarIndent = undefined;
-        }
-
-        let keyStartCol = indent;
-        let content = trimmedLeft;
-
-        if (content.startsWith('-')) {
-            continue;
-        }
-
-        const match = content.match(/^([^:#]+?):\s*(.*)$/);
-        if (!match) continue;
-
-        const keyText = match[1].trim();
-        if (!keyText) continue;
-
-        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
-            stack.pop();
-        }
-
-        const parentPrefix = stack[stack.length - 1].prefix;
-        const fullKey = parentPrefix ? `${parentPrefix}.${keyText}` : keyText;
-        locations.set(fullKey, { position: new vscode.Position(lineIndex, keyStartCol), keyText });
-
-        const rest = match[2] ?? '';
-        const trimmedRest = rest.trim();
-        if (/^[|>][+-]?\d*$/.test(trimmedRest)) {
-            blockScalarIndent = indent;
-        } else if (trimmedRest.length === 0) {
-            stack.push({ indent, prefix: fullKey });
-        }
-    }
-
-    return locations;
 }
 
 export class LanguageIndex {
@@ -549,7 +493,11 @@ export class LanguageIndex {
                 const keyLocations = findYamlKeyLocations(text);
                 const existingLocations = nextLocationsByLanguage.get(lang) ?? new Map<string, YamlKeyLocation>();
                 for (const [fullKey, loc] of keyLocations.entries()) {
-                    existingLocations.set(fullKey, { uri: file, position: loc.position, keyText: loc.keyText });
+                    existingLocations.set(fullKey, {
+                        uri: file,
+                        position: new vscode.Position(loc.line, loc.character),
+                        keyText: loc.keyText,
+                    });
                 }
                 nextLocationsByLanguage.set(lang, existingLocations);
 

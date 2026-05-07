@@ -170,6 +170,7 @@ Run checks:
 
 ```bash
 npm run typecheck
+npm test
 npm audit
 npm run build
 ```

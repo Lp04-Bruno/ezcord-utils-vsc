@@ -82,12 +82,13 @@ export function parseYamlToFlatMap(text: string): Map<string, string> {
 
     const parseBlockScalar = (startLineIndex: number, baseIndent: number): { value: string; endLineIndex: number } => {
         let i = startLineIndex + 1;
-        const collected: string[] = [];
+        const collected: Array<{ line: string; indent: number | undefined }> = [];
+        let minContentIndent: number | undefined;
 
         while (i < lines.length) {
             const line = lines[i];
             if (!line.trim()) {
-                collected.push('');
+                collected.push({ line: '', indent: undefined });
                 i++;
                 continue;
             }
@@ -95,11 +96,18 @@ export function parseYamlToFlatMap(text: string): Map<string, string> {
             const indent = countIndent(line);
             if (indent <= baseIndent) break;
 
-            collected.push(line.slice(baseIndent + 1));
+            minContentIndent = Math.min(minContentIndent ?? indent, indent);
+            collected.push({ line, indent });
             i++;
         }
 
-        return { value: collected.join('\n').replace(/\n+$/g, ''), endLineIndex: i - 1 };
+        const stripIndent = minContentIndent ?? baseIndent + 1;
+        const value = collected
+            .map(item => item.indent == null ? '' : item.line.slice(Math.min(item.indent, stripIndent)))
+            .join('\n')
+            .replace(/\n+$/g, '');
+
+        return { value, endLineIndex: i - 1 };
     };
 
     for (let i = 0; i < lines.length; i++) {
