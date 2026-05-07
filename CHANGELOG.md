@@ -4,7 +4,7 @@ All notable changes to this extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows semantic versioning.
 
-## [0.1.3] - 2026-05-06
+## [0.1.3] - 2026-05-07
 
 ### Added
 - Add YAML gutter usage badges for leaf translation keys including orange `0` badges for unused keys and green counts for used keys.
