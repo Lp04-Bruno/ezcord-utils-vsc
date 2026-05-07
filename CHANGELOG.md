@@ -4,6 +4,21 @@ All notable changes to this extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows semantic versioning.
 
+## [0.1.3] - 2026-05-06
+
+### Added
+- Add YAML gutter usage badges for leaf translation keys including orange `0` badges for unused keys and green counts for used keys.
+- Add reverse navigation from YAML keys back to Python usages via configurable inline CodeLens or hover popup.
+- Show a usage picker when a language key has multiple Python references.
+
+### Changed
+- Raise the minimum supported VS Code version to `1.100.0`.
+- Only show YAML usage markers on leaf translation keys, not on parent groups such as `guild` or `channel`.
+- Replace the boolean usage CodeLens setting with `ezcordUtils.yamlUsageNavigation` (`off`, `inline`, `hover`) defaulting to `off`.
+
+### Fixed
+- Keep YAML usage badges on the actual key line for block-scalar and list values, and ignore key-like text inside multiline translation content.
+
 ## [0.1.2] - 2026-05-04
 
 ### Changed
@@ -59,6 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 - Tolerant parsing for common non-strict YAML quirks.
 
+[0.1.3]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.3
 [0.1.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.2
 [0.1.1]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.0
