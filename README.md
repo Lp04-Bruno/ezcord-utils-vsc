@@ -1,91 +1,200 @@
-# EzCord Utils (VS Code)
+# EzCord Utils for VS Code
 
-Productivity helpers for EzCord-style i18n in VS Code.
+[![Version](https://img.shields.io/visual-studio-marketplace/v/Lp04-Bruno.ezcord-utils-vsc?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=Lp04-Bruno.ezcord-utils-vsc)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/Lp04-Bruno.ezcord-utils-vsc)](https://marketplace.visualstudio.com/items?itemName=Lp04-Bruno.ezcord-utils-vsc)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-This extension indexes your YAML language files and provides hover tooltips, autocomplete, and fast navigation to translation keys while you work in Python.
+EzCord Utils makes EzCord localization work feel native in VS Code. It indexes your YAML language files, understands common EzCord key lookup patterns and connects Python usage sites with their translations in both directions.
 
-## What you get
+Instead of manually searching through language files, you can hover a key, jump to the translation, see missing/unused keys and navigate back from YAML to the Python code that uses it.
 
-- **Hover translations** for i18n keys inside Python string literals.
-- **Autocomplete** for keys while typing.
-- **Jump to YAML**: open the correct language YAML and reveal the key.
-- **Jump back to Python usage**: YAML leaf keys get gutter badges (`0` in orange for unused keys, green counts for used keys) and optional inline or hover navigation.
-- **Language Keys Overview** tab: for the active Python file, shows keys for `<file>.*` plus `general.*` with one-click jump.
-- **Sidebar (Activity Bar)** with stats and quick actions.
-- **Auto-reload** when language files change.
-- **Tolerant parsing**: handles common “non-strict” YAML quirks.
+## Highlights
 
-## Quick start
+| Feature | What it does |
+| --- | --- |
+| Translation hover | Hover EzCord keys in Python strings and see resolved translations from your configured languages. |
+| Autocomplete | Complete language keys directly inside Python string literals. |
+| Jump to YAML | Open the matching YAML file and reveal the translation key. |
+| Reverse usage badges | YAML leaf keys show gutter badges: orange `0` for unused keys, green counts for used keys. |
+| Reverse navigation | From YAML keys, jump back to Python usages via hover popup or inline CodeLens. |
+| EzCord-aware resolving | Resolves full keys and context keys using file, method/function, class, file-local `general` and global `general`. |
+| Overview panel | Browse language keys for the active Python file plus shared `general` keys. |
 
-1. Install the extension.
-2. Open your EzCord project in VS Code.
-3. Make sure your language files are in the configured folder (default: `bot/lang`).
-4. Open any Python file and:
-    - hover a key like `level.settings.xp_modal.title`, or
-    - run **EzCord Utils: Open Language Keys Overview**.
+## Requirements
 
-## How key detection works
+- VS Code `1.100.0` or newer
+- An EzCord project using YAML language files
+- Language files reachable from the configured language folder by default `bot/lang`
 
-The extension looks at **Python string literals**.
+## Quick Start
 
-- Full keys like `level.settings.xp_modal.title` work directly.
-- Placeholders like `{general.ok}` inside longer strings are also detected.
-- If you type an unqualified key without dots (e.g. `"ok"`), the extension tries EzCord-like context candidates first:
-   1. `<currentFileNameWithoutPy>.<currentFunctionOrMethod>.<key>`
-   2. `<currentFileNameWithoutPy>.<currentClass>.<key>`
-   3. `<currentFileNameWithoutPy>.general.<key>`
-   4. `<currentFileNameWithoutPy>.<key>`
-   5. `general.<key>`
-   6. `<key>`
+1. Install **EzCord Utils**.
+2. Open your EzCord bot project in VS Code.
+3. Check the language folder setting:
+
+```json
+{
+  "ezcordUtils.languageFolderPath": "bot/lang",
+  "ezcordUtils.defaultLanguage": "en",
+  "ezcordUtils.fallbackLanguage": "de",
+  "ezcordUtils.yamlUsageNavigation": "hover"
+}
+```
+
+4. Run **EzCord Utils: Reload Language Files** once.
+5. Open a Python file and hover an EzCord language key.
+6. Open a YAML language file and look at the gutter badges next to leaf keys.
+
+## Python Workflow
+
+Hover works on complete keys:
+
+```python
+await ctx.respond("base.notification.reminder.daily_footer")
+```
+
+It also resolves shorter context keys when EzCord would search relative to the current file, method, class or `general` section:
+
+```python
+await ctx.respond("daily_footer")
+```
+
+Placeholders inside longer strings are detected too:
+
+```python
+await ctx.respond("Status: {general.enabled}")
+```
+
+Hover cards show the resolved key, the selected language, available translations and a link to open the YAML location.
+
+## YAML Workflow
+
+In YAML files, EzCord Utils marks leaf translation keys:
+
+```yaml
+base:
+  notification:
+    reminder:
+      daily_footer:
+        - Manage your notifications with {notification_cmd}
+        - Cookies are delicious
+```
+
+The badge is placed on `daily_footer`, not inside the list content.
+
+- Orange `0`: no Python usage found
+- Green `1`, `2`, `3`, ...: number of Python usages
+- Green `99+`: many usages
+
+Reverse navigation is controlled by `ezcordUtils.yamlUsageNavigation`:
+
+| Value | Behavior |
+| --- | --- |
+| `off` | Show only gutter badges. |
+| `hover` | Show a hover popup on used YAML keys with links back to Python usages. This is the default. |
+| `inline` | Show clickable CodeLens actions above used YAML keys. |
+
+When multiple usages exist, EzCord Utils opens a searchable picker so you can choose the exact location.
+
+## Key Resolution
+
+For a raw key like `"daily_footer"`, EzCord Utils tries candidates in a practical EzCord-like order:
+
+1. `<currentFileNameWithoutPy>.<currentFunctionOrMethod>.<key>`
+2. `<currentFileNameWithoutPy>.<currentClass>.<key>`
+3. `<currentFileNameWithoutPy>.general.<key>`
+4. `<currentFileNameWithoutPy>.<key>`
+5. `general.<key>`
+6. `<key>`
+
+Full keys like `"base.notification.reminder.daily_footer"` are resolved directly.
 
 ## Configuration
 
-Open Settings and search for **EzCord Utils** (or edit `settings.json`).
+Open Settings and search for **EzCord Utils** or edit `settings.json`.
 
-- `ezcordUtils.languageFolderPath` (default: `bot/lang`)
-   - Relative to the workspace root (or absolute path).
-   - All `*.yaml` / `*.yml` files under this folder are indexed.
-- `ezcordUtils.defaultLanguage` (default: `en`)
-   - Preferred language prefix (for example `en` for `en.yaml`).
-- `ezcordUtils.fallbackLanguage` (default: `en`)
-   - Used if the key is missing in the default language.
-- `ezcordUtils.yamlUsageNavigation` (default: `hover`)
-   - `off`: only show usage badges in the YAML gutter.
-   - `inline`: show clickable CodeLens jump actions above used YAML keys.
-   - `hover`: show a hover popup on used YAML keys with links back to Python usages.
+| Setting | Default | Description |
+| --- | --- | --- |
+| `ezcordUtils.languageFolderPath` | `bot/lang` | Folder containing YAML language files. Relative to the workspace root or absolute. |
+| `ezcordUtils.defaultLanguage` | `en` | Preferred language filename prefix, for example `en` for `en.yaml`. |
+| `ezcordUtils.fallbackLanguage` | `en` | Fallback language prefix if a key is missing in the default language. |
+| `ezcordUtils.yamlUsageNavigation` | `hover` | Reverse navigation style for YAML keys: `off`, `hover`, or `inline`. |
 
 ## Commands
 
-You can run these via the Command Palette:
-
-- **EzCord Utils: Open Language Keys Overview** (`ezcordUtils.openLanguageKeysOverview`)
-- **EzCord Utils: Open Translation in YAML** (`ezcordUtils.openTranslation`)
-- **EzCord Utils: Reload Language Files** (`ezcordUtils.reloadLanguages`)
-- **EzCord Utils: Reveal Language Folder** (`ezcordUtils.revealLanguageFolder`)
-- **EzCord Utils: Open Settings** (`ezcordUtils.openSettings`)
-- **EzCord Utils: Show Output** (`ezcordUtils.openOutput`)
+| Command | ID |
+| --- | --- |
+| Open Language Keys Overview | `ezcordUtils.openLanguageKeysOverview` |
+| Open Translation in YAML | `ezcordUtils.openTranslation` |
+| Reload Language Files | `ezcordUtils.reloadLanguages` |
+| Reveal Language Folder | `ezcordUtils.revealLanguageFolder` |
+| Open Settings | `ezcordUtils.openSettings` |
+| Show Output | `ezcordUtils.openOutput` |
 
 ## Troubleshooting
 
-- Open **Output** → select **EzCord Utils**.
-- If nothing is indexed:
-   - verify `ezcordUtils.languageFolderPath` points to the folder containing your YAML files
-   - run **EzCord Utils: Reload Language Files** once
-- Multi-root workspaces are supported: the extension searches all workspace folders.
+### No hover or autocomplete appears
+
+- Run **EzCord Utils: Reload Language Files**.
+- Check **Output** -> **EzCord Utils**.
+- Verify `ezcordUtils.languageFolderPath` points to the folder containing your YAML files.
+- Make sure the current file is recognized as Python.
+
+### YAML badges look outdated
+
+- Save changed Python/YAML files.
+- Run **EzCord Utils: Reload Language Files**.
+- Reload the Extension Development Host when testing local builds.
+
+### A language appears that you did not configure
+
+EzCord Utils only displays configured default/fallback language translations in hover output. If a file is detected as an unconfigured language, it is skipped and noted in the **EzCord Utils** output channel.
 
 ## Development
 
-Prereqs: Node.js + npm.
+Prerequisites:
+
+- Node.js `18` or newer
+- npm
+- VS Code `1.100.0` or newer
+
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Run checks:
+
+```bash
+npm run typecheck
+npm audit
 npm run build
 ```
 
-For local development:
+Start local development:
 
 ```bash
 npm run watch
 ```
 
-Then press `F5` to launch an **Extension Development Host**.
+Then press `F5` in VS Code to launch an **Extension Development Host**.
+
+## Packaging
+
+Build and create a local VSIX:
+
+```bash
+npm run build
+npx @vscode/vsce package
+```
+
+Install the generated VSIX locally:
+
+```bash
+code --install-extension ezcord-utils-vsc-0.1.3.vsix
+```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
