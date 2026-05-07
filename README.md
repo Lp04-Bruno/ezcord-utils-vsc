@@ -1,8 +1,10 @@
 # EzCord Utils for VS Code
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/Lp04-Bruno.ezcord-utils-vsc?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=Lp04-Bruno.ezcord-utils-vsc)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/Lp04-Bruno.ezcord-utils-vsc)](https://marketplace.visualstudio.com/items?itemName=Lp04-Bruno.ezcord-utils-vsc)
+[![Marketplace](https://img.shields.io/badge/Marketplace-EzCord%20Utils-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=Lp04-Bruno.ezcord-utils-vsc)
+[![Version](https://img.shields.io/badge/version-0.1.3-5865F2.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.100%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9-F7DF1E?logo=typescript&logoColor=1f2937)](https://www.typescriptlang.org/)
 
 EzCord Utils makes EzCord localization work feel native in VS Code. It indexes your YAML language files, understands common EzCord key lookup patterns and connects Python usage sites with their translations in both directions.
 
