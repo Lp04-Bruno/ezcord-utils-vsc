@@ -110,7 +110,7 @@
         },
         "ezcordUtils.yamlUsageNavigation": {
           "type": "string",
-          "default": "off",
+          "default": "hover",
           "enum": [
             "off",
             "inline",
@@ -121,7 +121,7 @@
             "Show inline CodeLens jump actions above used YAML keys.",
             "Show a hover popup on used YAML keys with links back to Python usages."
           ],
-          "description": "Controls how YAML language keys link back to Python usages. Usage count badges in the gutter are always shown for used leaf keys."
+          "description": "Controls how YAML language keys link back to Python usages. Usage count badges in the gutter are always shown for leaf keys."
         }
       }
     }

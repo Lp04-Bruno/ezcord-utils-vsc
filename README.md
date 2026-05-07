@@ -49,7 +49,7 @@ Open Settings and search for **EzCord Utils** (or edit `settings.json`).
    - Preferred language prefix (for example `en` for `en.yaml`).
 - `ezcordUtils.fallbackLanguage` (default: `en`)
    - Used if the key is missing in the default language.
-- `ezcordUtils.yamlUsageNavigation` (default: `off`)
+- `ezcordUtils.yamlUsageNavigation` (default: `hover`)
    - `off`: only show usage badges in the YAML gutter.
    - `inline`: show clickable CodeLens jump actions above used YAML keys.
    - `hover`: show a hover popup on used YAML keys with links back to Python usages.

@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - Raise the minimum supported VS Code version to `1.100.0`.
 - Only show YAML usage markers on leaf translation keys, not on parent groups such as `guild` or `channel`.
-- Replace the boolean usage CodeLens setting with `ezcordUtils.yamlUsageNavigation` (`off`, `inline`, `hover`) defaulting to `off`.
+- Replace the boolean usage CodeLens setting with `ezcordUtils.yamlUsageNavigation` (`off`, `inline`, `hover`) defaulting to `hover`.
 
 ### Fixed
 - Keep YAML usage badges on the actual key line for block-scalar and list values, and ignore key-like text inside multiline translation content.
