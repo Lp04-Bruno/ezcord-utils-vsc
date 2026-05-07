@@ -4,6 +4,15 @@ All notable changes to this extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows semantic versioning.
 
+## [0.1.4] - 2026-05-07
+
+### Added
+- Add unit tests for key resolution, YAML key locations and tolerant YAML parsing.
+- Add GitHub Actions CI for push and pull request checks.
+
+### Changed
+- Improve the public README with a more complete feature overview, workflow examples, configuration reference, troubleshooting and packaging notes.
+
 ## [0.1.3] - 2026-05-07
 
 ### Added
@@ -74,6 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 - Tolerant parsing for common non-strict YAML quirks.
 
+[0.1.4]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.4
 [0.1.3]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.3
 [0.1.2]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.2
 [0.1.1]: https://github.com/Lp04-Bruno/ezcord-utils-vsc/releases/tag/v0.1.1
