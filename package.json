@@ -130,7 +130,7 @@
     "vscode:prepublish": "npm run bundle",
     "build": "npm run bundle",
     "compile": "tsc -p ./",
-    "test": "npm run compile && node --test \"test/**/*.test.js\"",
+    "test": "npm run compile && node --test test/*.test.js",
     "typecheck": "tsc -p ./ --noEmit",
     "bundle": "npm run typecheck && node scripts/esbuild.js",
     "watch": "node scripts/esbuild.js --watch",
