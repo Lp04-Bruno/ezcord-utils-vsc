@@ -34,7 +34,7 @@
     "discord"
   ],
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.100.0"
   },
   "activationEvents": [
     "onLanguage:python",
@@ -140,7 +140,7 @@
   },
   "devDependencies": {
     "@types/node": "^16.18.0",
-    "@types/vscode": "^1.75.0",
+    "@types/vscode": "1.100.0",
     "esbuild": "^0.28.0",
     "typescript": "^4.4.3"
   }
